@@ -30,7 +30,7 @@ const userAuthController = {
             
             if (!user || !(await user.comparePassword(password))) {
                 req.flash('error', 'Invalid email or password');
-                return res.redirect('/login');
+                return res.redirect('/user/login');
             }
 
             req.session.user = {
@@ -43,7 +43,7 @@ const userAuthController = {
         } catch (error) {
             console.error('Login error:', error);
             req.flash('error', 'Something went wrong');
-            res.redirect('/login');
+            res.redirect('/user/login');
         }
     },
 
@@ -66,7 +66,7 @@ const userAuthController = {
 
             if (!user) {
                 req.flash('success', 'If an account exists with that email, a reset link has been sent.');
-                return res.redirect('/forgot-password');
+                return res.redirect('/user/forgot-password');
             }
 
             // Create reset token
@@ -96,11 +96,11 @@ const userAuthController = {
             });
 
             req.flash('success', 'A reset link has been sent to your email.');
-            res.redirect('/forgot-password');
+            res.redirect('/user/forgot-password');
         } catch (error) {
             console.error('Forgot password error:', error);
             req.flash('error', 'Something went wrong while sending the email.');
-            res.redirect('/forgot-password');
+            res.redirect('/user/forgot-password');
         }
     },
 
@@ -114,7 +114,7 @@ const userAuthController = {
 
         if (!user) {
             req.flash('error', 'Token is invalid or has expired');
-            return res.redirect('/forgot-password');
+            return res.redirect('/user/forgot-password');
         }
 
         res.render('auth/reset-password', { token, error: req.flash('error'), searchTitle: 'Reset Password' });
@@ -128,7 +128,7 @@ const userAuthController = {
 
             if (password !== confirmPassword) {
                 req.flash('error', 'Passwords do not match');
-                return res.redirect(`/reset-password/${token}`);
+                return res.redirect(`/user/reset-password/${token}`);
             }
 
             const user = await User.findOne({ 
@@ -138,7 +138,7 @@ const userAuthController = {
 
             if (!user) {
                 req.flash('error', 'Token is invalid or has expired');
-                return res.redirect('/forgot-password');
+                return res.redirect('/user/forgot-password');
             }
 
             user.password = password;
@@ -147,11 +147,11 @@ const userAuthController = {
             await user.save();
 
             req.flash('success', 'Password reset successful! You can now login.');
-            res.redirect('/login');
+            res.redirect('/user/login');
         } catch (error) {
             console.error('Reset password error:', error);
             req.flash('error', 'Something went wrong');
-            res.redirect('/forgot-password');
+            res.redirect('/user/forgot-password');
         }
     }
 };
