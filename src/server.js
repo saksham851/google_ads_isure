@@ -100,20 +100,20 @@ app.use((req, res, next) => {
 });
 
 app.use(errorHandler);
-const startServer = async () => {
-    // Connect to the DB first
-    await connectDB();
-    const PORT = process.env.PORT || 3000;
+// Connect to the database globally so Vercel can cache the connection
+connectDB().catch(err => {
+    logger.error('Failed to connect to database:', err);
+});
 
+// Start the server if running locally
+if (require.main === module) {
+    const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {
         logger.info(`[Server] GHL-Google Ads Integration Backend running on port ${PORT}`);
         logger.info(`[Auth] User Login: http://localhost:${PORT}/user/login`);
         logger.info(`[Webhooks] GHL Webhook endpoint: http://localhost:${PORT}/webhooks/ghl`);
     });
-};
+}
 
-startServer().catch(err => {
-    logger.error('Failed to start server:', err);
-    process.exit(1);
-});
-
+// Export the app for Vercel serverless functions
+module.exports = app;
