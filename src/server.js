@@ -5,7 +5,8 @@ const morgan = require('morgan');
 const dotenv = require('dotenv');
 const path = require('path');
 const session = require('express-session');
-const MongoStore = require('connect-mongo');
+const ms = require('connect-mongo');
+const MongoStore = ms.default || ms;
 const flash = require('connect-flash');
 const expressLayouts = require('express-ejs-layouts');
 
