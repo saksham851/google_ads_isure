@@ -5,7 +5,7 @@ const morgan = require('morgan');
 const dotenv = require('dotenv');
 const path = require('path');
 const session = require('express-session');
-const MongoDBStore = require('connect-mongodb-session')(session);
+const MongoStore = require('connect-mongo');
 const flash = require('connect-flash');
 const expressLayouts = require('express-ejs-layouts');
 
@@ -30,9 +30,9 @@ app.use(expressLayouts);
 app.set('layout', 'layouts/auth_layout'); // Default layout
 
 // Session Setup
-const store = new MongoDBStore({
-    uri: process.env.MONGODB_URI,
-    collection: 'sessions'
+const store = MongoStore.create({
+    mongoUrl: process.env.MONGODB_URI,
+    collectionName: 'sessions'
 });
 
 app.use(session({
