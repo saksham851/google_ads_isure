@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Ads Integration - Setup</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-hover: #4338CA;
+            --bg: #F9FAFB;
+            --card-bg: #FFFFFF;
+            --text-main: #111827;
+            --text-muted: #6B7280;
+            --border: #E5E7EB;
+            --success: #10B981;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--border);
+        }
+
+        h1 { font-weight: 700; font-size: 1.5rem; margin-bottom: 0.5rem; }
+        p.subtitle { color: var(--text-muted); margin-bottom: 2rem; }
+
+        .step {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            margin-bottom: 1rem;
+            transition: all 0.2s;
+        }
+
+        .step.active { border-color: var(--primary); background-color: #EEF2FF; }
+
+        .step-number {
+            background: var(--primary);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            flex-shrink: 0;
+            margin-top: 0.2rem;
+        }
+
+        .step-content { flex-grow: 1; }
+        .step-title { font-weight: 600; margin-bottom: 0.25rem; }
+        .step-desc { font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1rem; }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: background 0.2s;
+        }
+        .btn:hover { background: var(--primary-hover); }
+
+        .input-group { margin-top: 1rem; }
+        label { display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem; }
+        input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            margin-bottom: 1rem;
+            box-sizing: border-box;
+        }
+
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            background: #D1FAE5;
+            color: #065F46;
+            margin-left: 0.5rem;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>App Configuration Dashboard</h1>
+            <p class="subtitle">Complete these 3 steps to sync your GoHighLevel leads with Google Ads Conversions.</p>
+
+            <!-- Step 1: Connect GHL -->
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <div class="step-title">Connect GoHighLevel <span class="status-badge" id="ghl-status">Incomplete</span></div>
+                    <div class="step-desc">Authorize our app to read your contact data.</div>
+                    <a href="/auth/install" class="btn">Login with GHL</a>
+                </div>
+            </div>
+
+            <!-- Step 2: Connect Google Ads -->
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <div class="step-title">Authorize Google Ads <span class="status-badge" id="google-status">Incomplete</span></div>
+                    <div class="step-desc">Link your Google Ads account to start sending conversion data.</div>
+                    <!-- We'll dynamically append locationId from URL here -->
+                    <a href="#" id="google-login-btn" class="btn">Connect Google Account</a>
+                </div>
+            </div>
+
+            <!-- Step 3: Google Ads ID -->
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <div class="step-title">Google Ads Customer ID</div>
+                    <div class="step-desc">Enter the 10-digit ID (Manager or Sub-account) where you track conversions.</div>
+                    <div class="input-group">
+                        <label for="customerId">Customer ID (e.g., 123-456-7890)</label>
+                        <input type="text" id="customerId" placeholder="1234567890">
+                        <button class="btn" onclick="saveSettings()">Save Configuration</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Extract locationId from URL (passed by GHL)
+        const urlParams = new URLSearchParams(window.location.search);
+        const locationId = urlParams.get('location_id') || 'dummy_test';
+
+        // Update Google Login Link with locationId
+        document.getElementById('google-login-btn').href = `/auth/google-login?locationId=${locationId}`;
+
+        function saveSettings() {
+            const customerId = document.getElementById('customerId').value.replace(/-/g, ''); // strip dashes
+            if(!customerId || customerId.length < 10) {
+                alert("Please enter a valid 10-digit Customer ID.");
+                return;
+            }
+            
+            // Call API to save customerId for the location
+            alert("Settings Saved! (Backend integration needed here)");
+            console.log("Saving Customer ID:", customerId, "for Location:", locationId);
+        }
+    </script>
+</body>
+</html>

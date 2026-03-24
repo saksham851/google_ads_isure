@@ -1,0 +1,66 @@
+<div class="row">
+    <div class="col-sm-12">
+        <div class="card table-card mt-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Configured Agencies</h5>
+                <a href="/agencies/create" class="btn btn-primary d-inline-flex align-items-center">
+                    <i class="ti ti-plus me-1"></i> Add Agency
+                </a>
+            </div>
+            <div class="card-body pt-0">
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Agency Name</th>
+                                <th>GHL Agency ID</th>
+                                <th>GAds Customer ID</th>
+                                <th>Status</th>
+                                <th>Webhook URL</th>
+                                <th class="text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% agencies.forEach(agency => { %>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0">
+                                            <div class="avtar avtar-s bg-light-primary text-primary"><%= agency.agencyName ? agency.agencyName.charAt(0).toUpperCase() : 'A' %></div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <h6 class="mb-0"><%= agency.agencyName || 'Unnamed Agency' %></h6>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><code><%= agency.agencyId %></code></td>
+                                <td><%= agency.googleAdsCustomerId || 'Not Linked' %></td>
+                                <td>
+                                    <span class="badge bg-light-<%= agency.isActive ? 'success' : 'warning' %> text-<%= agency.isActive ? 'success' : 'warning' %>">
+                                        <%= agency.isActive ? 'ACTIVE' : 'INACTIVE' %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <small class="text-muted"><code><%= baseUrl %>/webhooks/ghl/<%= agency.agencyId %></code></small>
+                                </td>
+                                <td class="text-center">
+                                    <a href="#!" class="btn btn-link-secondary btn-sm"><i class="ti ti-edit"></i></a>
+                                    <a href="#!" class="btn btn-link-danger btn-sm"><i class="ti ti-trash"></i></a>
+                                </td>
+                            </tr>
+                            <% }) %>
+                            <% if (agencies.length === 0) { %>
+                                <tr>
+                                    <td colspan="6" class="text-center py-5">
+                                        <p class="text-muted mb-3">No agencies configured yet</p>
+                                        <a href="/agencies/create" class="btn btn-outline-primary btn-sm">Configure your first agency</a>
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

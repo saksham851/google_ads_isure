@@ -1,0 +1,81 @@
+<% 
+    // Variable safety guards
+    var stats = typeof stats !== 'undefined' ? stats : { agencyCount: 0, conversionCount: 0 };
+    var recentLogs = typeof recentLogs !== 'undefined' ? recentLogs : [];
+%>
+<div class="row">
+    <!-- Stats Cards -->
+    <div class="col-md-6 col-xl-4">
+        <div class="card stat-card shadow-sm border-0">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="avtar avtar-s bg-light-primary text-primary" style="width: 48px; height: 48px;">
+                        <i class="ti ti-building" style="font-size: 24px;"></i>
+                    </div>
+                </div>
+                <div>
+                    <h2 class="mb-1 fw-bold" style="color: #202124;"><%= stats.agencyCount %></h2>
+                    <p class="text-muted mb-0 fw-medium">Active Agencies</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-4">
+        <div class="card stat-card shadow-sm border-0">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="avtar avtar-s bg-light-success text-success" style="width: 48px; height: 48px;">
+                        <i class="ti ti-check" style="font-size: 24px;"></i>
+                    </div>
+                </div>
+                <div>
+                    <h2 class="mb-1 fw-bold" style="color: #202124;"><%= stats.conversionCount %></h2>
+                    <p class="text-muted mb-0 fw-medium">Conversions Sent</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Conversion Logs -->
+    <div class="col-12 mt-4">
+        <div class="card table-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Recent Conversions</h5>
+                <a href="/logs" class="btn btn-sm btn-link-primary">View All</a>
+            </div>
+            <div class="card-body pt-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="pc-dt-simple">
+                        <thead>
+                            <tr>
+                                <th>Lead Email</th>
+                                <th>GCLID</th>
+                                <th>Time</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% recentLogs.forEach(log => { %>
+                            <tr>
+                                <td><%= log.leadId ? log.leadId.email : 'N/A' %></td>
+                                <td><code><%= log.gclid %></code></td>
+                                <td><%= new Date(log.createdAt).toLocaleString() %></td>
+                                <td>
+                                    <span class="badge bg-light-<%= log.status === 'success' ? 'success' : 'danger' %> text-<%= log.status === 'success' ? 'success' : 'danger' %>">
+                                        <%= log.status.toUpperCase() %>
+                                    </span>
+                                </td>
+                            </tr>
+                            <% }) %>
+                            <% if (recentLogs.length === 0) { %>
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-4">No recent conversions found</td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

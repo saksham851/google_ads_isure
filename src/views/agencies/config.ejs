@@ -1,0 +1,43 @@
+<div class="row">
+    <div class="col-sm-12">
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5>Agency Configuration</h5>
+                <p class="text-muted mb-0">Link a GHL Agency and Google Ads Customer ID for automated conversion tracking.</p>
+            </div>
+            <div class="card-body">
+                <form action="/agencies" method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-4">
+                                <label class="form-label">Agency Name</label>
+                                <input type="text" class="form-control" name="agencyName" placeholder="e.g., Isuremedia Agency" required>
+                                <small class="text-muted">A friendly name to identify this agency in your dashboard.</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-4">
+                                <label class="form-label">GHL Company/Agency ID</label>
+                                <input type="text" class="form-control" name="agencyId" placeholder="e.g., 69aad8e0fabd7b425927d40e" required>
+                                <small class="text-muted">Retrieve this from your GHL Agency settings.</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-4">
+                                <label class="form-label">Google Ads Customer ID</label>
+                                <input type="text" class="form-control" name="googleAdsCustomerId" placeholder="e.g., 804-134-5841" required>
+                                <small class="text-muted">Format: XXX-XXX-XXXX</small>
+                            </div>
+                        </div>
+                        <div class="col-md-12 text-end mt-4">
+                            <a href="/agencies" class="btn btn-outline-secondary me-2">Cancel</a>
+                            <button type="submit" class="btn btn-primary d-inline-flex align-items-center">
+                                <i class="ti ti-device-floppy me-2"></i> Save Configuration
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

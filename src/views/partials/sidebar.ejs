@@ -1,0 +1,65 @@
+<style>
+    .pc-sidebar .pc-item .pc-link {
+        border-radius: 8px !important;
+        margin: 4px 16px !important;
+        transition: all 0.2s ease-in-out;
+    }
+</style>
+<nav class="pc-sidebar">
+    <div class="navbar-wrapper">
+        <div class="m-header justify-content-center">
+            <a href="/dashboard" class="b-brand">
+                <img src="/assets/images/isuremedia-logo.svg" class="img-fluid logo-lg" alt="logo"
+                    onerror="this.src='/assets/images/isuremedia-logo.webp'" style="max-height: 55px;">
+            </a>
+        </div>
+        <div class="navbar-content">
+            <ul class="pc-navbar mt-3">
+
+                <li class="pc-item pc-caption">
+                    <label class="fw-bold text-uppercase small" style="letter-spacing: 1px; color: #94a3b8;">Main
+                        Navigation</label>
+                    <i class="ti ti-settings"></i>
+                </li>
+
+                <li
+                    class="pc-item <%= typeof activePage !== 'undefined' && activePage === 'dashboard' ? 'active' : '' %>">
+                    <a href="/dashboard" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-dashboard"></i></span>
+                        <span class="pc-mtext">Dashboard</span>
+                    </a>
+                </li>
+
+                <li class="pc-item pc-caption">
+                    <label class="fw-bold text-uppercase small"
+                        style="letter-spacing: 1px; color: #94a3b8;">Integrations</label>
+                    <i class="ti ti-link"></i>
+                </li>
+
+                <li
+                    class="pc-item <%= typeof activePage !== 'undefined' && activePage === 'agencies' ? 'active' : '' %>">
+                    <a href="/agencies" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-building"></i></span>
+                        <span class="pc-mtext">Agencies</span>
+                    </a>
+                </li>
+
+                <li class="pc-item <%= typeof activePage !== 'undefined' && activePage === 'logs' ? 'active' : '' %>">
+                    <a href="/logs" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-file-text"></i></span>
+                        <span class="pc-mtext">Conversion Logs</span>
+                    </a>
+                </li>
+
+                <li
+                    class="pc-item <%= typeof activePage !== 'undefined' && activePage === 'webhooks' ? 'active' : '' %>">
+                    <a href="/webhooks-logs" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-webhook"></i></span>
+                        <span class="pc-mtext">Webhook Logs</span>
+                    </a>
+                </li>
+
+            </ul>
+        </div>
+    </div>
+</nav>
