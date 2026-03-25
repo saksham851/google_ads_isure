@@ -1,76 +1,151 @@
 <% 
-    // Variable safety guards
-    var stats = typeof stats !== 'undefined' ? stats : { agencyCount: 0, conversionCount: 0 };
+    var stats      = typeof stats      !== 'undefined' ? stats      : { agencyCount: 0, conversionCount: 0, webhookCount: 0, failedCount: 0 };
     var recentLogs = typeof recentLogs !== 'undefined' ? recentLogs : [];
 %>
-<div class="row">
-    <!-- Stats Cards -->
-    <div class="col-md-6 col-xl-4">
-        <div class="card stat-card shadow-sm border-0">
+
+<div class="row g-4">
+
+    <!-- Stat Cards -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="card h-100" style="border:1px solid #dadce0;border-radius:10px;">
             <div class="card-body p-4">
                 <div class="d-flex align-items-center justify-content-between mb-3">
-                    <div class="avtar avtar-s bg-light-primary text-primary" style="width: 48px; height: 48px;">
-                        <i class="ti ti-building" style="font-size: 24px;"></i>
+                    <div style="width:44px;height:44px;border-radius:10px;background:#e8f0fe;display:flex;align-items:center;justify-content:center;">
+                        <i class="ti ti-building" style="font-size:22px;color:#1a73e8;"></i>
                     </div>
+                    <span style="font-size:11px;font-weight:600;color:#9aa0a6;text-transform:uppercase;letter-spacing:.5px;">Sub-Accounts</span>
                 </div>
-                <div>
-                    <h2 class="mb-1 fw-bold" style="color: #202124;"><%= stats.agencyCount %></h2>
-                    <p class="text-muted mb-0 fw-medium">Active Agencies</p>
+                <h2 class="fw-bold mb-0" style="color:#202124;font-size:32px;"><%= stats.agencyCount %></h2>
+                <p class="text-muted mb-0 mt-1" style="font-size:13px;">Connected agencies</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card h-100" style="border:1px solid #dadce0;border-radius:10px;">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div style="width:44px;height:44px;border-radius:10px;background:#e6f4ea;display:flex;align-items:center;justify-content:center;">
+                        <i class="ti ti-arrow-up-right" style="font-size:22px;color:#1e8e3e;"></i>
+                    </div>
+                    <span style="font-size:11px;font-weight:600;color:#9aa0a6;text-transform:uppercase;letter-spacing:.5px;">Conversions</span>
+                </div>
+                <h2 class="fw-bold mb-0" style="color:#202124;font-size:32px;"><%= stats.conversionCount %></h2>
+                <p class="text-muted mb-0 mt-1" style="font-size:13px;">Uploaded to Google Ads</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card h-100" style="border:1px solid #dadce0;border-radius:10px;">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div style="width:44px;height:44px;border-radius:10px;background:#fff8e1;display:flex;align-items:center;justify-content:center;">
+                        <i class="ti ti-plug" style="font-size:22px;color:#f9ab00;"></i>
+                    </div>
+                    <span style="font-size:11px;font-weight:600;color:#9aa0a6;text-transform:uppercase;letter-spacing:.5px;">Webhooks</span>
+                </div>
+                <h2 class="fw-bold mb-0" style="color:#202124;font-size:32px;"><%= stats.webhookCount %></h2>
+                <p class="text-muted mb-0 mt-1" style="font-size:13px;">GHL events received</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card h-100" style="border:1px solid #dadce0;border-radius:10px;">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div style="width:44px;height:44px;border-radius:10px;background:#fce8e6;display:flex;align-items:center;justify-content:center;">
+                        <i class="ti ti-alert-circle" style="font-size:22px;color:#d93025;"></i>
+                    </div>
+                    <span style="font-size:11px;font-weight:600;color:#9aa0a6;text-transform:uppercase;letter-spacing:.5px;">Failed</span>
+                </div>
+                <h2 class="fw-bold mb-0" style="color:#202124;font-size:32px;"><%= stats.failedCount %></h2>
+                <p class="text-muted mb-0 mt-1" style="font-size:13px;">Failed conversions</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="col-12">
+        <div class="card" style="border:1px solid #dadce0;border-radius:10px;background:linear-gradient(135deg,#1a73e8 0%,#1557b0 100%);">
+            <div class="card-body p-4">
+                <div class="row align-items-center">
+                    <div class="col-md-7">
+                        <h5 class="fw-bold text-white mb-1">Ready to connect a new GHL sub-account?</h5>
+                        <p class="mb-0" style="color:rgba(255,255,255,.8);font-size:14px;">
+                            Click "Connect with GoHighLevel" to install the app in a sub-account. Tokens are saved automatically.
+                        </p>
+                    </div>
+                    <div class="col-md-5 text-md-end mt-3 mt-md-0 d-flex gap-2 justify-content-md-end flex-wrap">
+                        <a href="/auth/install" class="btn d-inline-flex align-items-center gap-2"
+                           style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:6px;">
+                            <i class="ti ti-brand-hipchat"></i> Connect GoHighLevel
+                        </a>
+                        <a href="/agencies" class="btn d-inline-flex align-items-center gap-2"
+                           style="background:#fff;color:#1a73e8;font-weight:600;border-radius:6px;">
+                            <i class="ti ti-building-store"></i> View Sub-Accounts
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-md-6 col-xl-4">
-        <div class="card stat-card shadow-sm border-0">
-            <div class="card-body p-4">
-                <div class="d-flex align-items-center justify-content-between mb-3">
-                    <div class="avtar avtar-s bg-light-success text-success" style="width: 48px; height: 48px;">
-                        <i class="ti ti-check" style="font-size: 24px;"></i>
-                    </div>
-                </div>
-                <div>
-                    <h2 class="mb-1 fw-bold" style="color: #202124;"><%= stats.conversionCount %></h2>
-                    <p class="text-muted mb-0 fw-medium">Conversions Sent</p>
-                </div>
+
+    <!-- Recent Conversion Logs Table -->
+    <div class="col-12">
+        <div class="card" style="border:1px solid #dadce0;border-radius:10px;">
+            <div class="card-header d-flex justify-content-between align-items-center py-3 px-4" style="background:#f8f9fa;border-bottom:1px solid #dadce0;">
+                <h6 class="mb-0 fw-semibold" style="color:#202124;">Recent Conversion Uploads</h6>
+                <a href="/logs" class="btn btn-sm btn-outline-primary" style="font-size:12px;">View All Logs</a>
             </div>
-        </div>
-    </div>
-    
-    <!-- Recent Conversion Logs -->
-    <div class="col-12 mt-4">
-        <div class="card table-card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Recent Conversions</h5>
-                <a href="/logs" class="btn btn-sm btn-link-primary">View All</a>
-            </div>
-            <div class="card-body pt-0">
+            <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover mb-0" id="pc-dt-simple">
-                        <thead>
+                    <table class="table mb-0">
+                        <thead style="background:#f8f9fa;">
                             <tr>
-                                <th>Lead Email</th>
-                                <th>GCLID</th>
-                                <th>Time</th>
-                                <th>Status</th>
+                                <th class="px-4 py-3" style="font-size:12px;font-weight:600;color:#5f6368;text-transform:uppercase;">Lead Email</th>
+                                <th class="py-3" style="font-size:12px;font-weight:600;color:#5f6368;text-transform:uppercase;">GCLID</th>
+                                <th class="py-3" style="font-size:12px;font-weight:600;color:#5f6368;text-transform:uppercase;">Conversion Action</th>
+                                <th class="py-3" style="font-size:12px;font-weight:600;color:#5f6368;text-transform:uppercase;">Time</th>
+                                <th class="py-3" style="font-size:12px;font-weight:600;color:#5f6368;text-transform:uppercase;">Status</th>
                             </tr>
                         </thead>
                         <tbody>
                             <% recentLogs.forEach(log => { %>
                             <tr>
-                                <td><%= log.leadId ? log.leadId.email : 'N/A' %></td>
-                                <td><code><%= log.gclid %></code></td>
-                                <td><%= new Date(log.createdAt).toLocaleString() %></td>
-                                <td>
-                                    <span class="badge bg-light-<%= log.status === 'success' ? 'success' : 'danger' %> text-<%= log.status === 'success' ? 'success' : 'danger' %>">
+                                <td class="px-4 py-3" style="font-size:13px;color:#202124;">
+                                    <%= log.leadId ? log.leadId.email : 'N/A' %>
+                                </td>
+                                <td class="py-3">
+                                    <code style="font-size:11px;background:#f1f3f4;padding:2px 6px;border-radius:4px;">
+                                        <%= (log.gclid || '').substring(0, 20) %>...
+                                    </code>
+                                </td>
+                                <td class="py-3" style="font-size:13px;color:#5f6368;">
+                                    <%= log.conversionAction || '—' %>
+                                </td>
+                                <td class="py-3" style="font-size:13px;color:#70757a;">
+                                    <%= new Date(log.createdAt).toLocaleString() %>
+                                </td>
+                                <td class="py-3">
+                                    <% 
+                                        var statusColor = log.status === 'success' ? '#1e8e3e' : (log.status === 'failed' ? '#c5221f' : '#b06000');
+                                        var statusBg    = log.status === 'success' ? '#e6f4ea'  : (log.status === 'failed' ? '#fce8e6'  : '#fef9e7');
+                                    %>
+                                    <span style="background:<%= statusBg %>;color:<%= statusColor %>;border-radius:12px;padding:3px 10px;font-size:12px;font-weight:600;">
                                         <%= log.status.toUpperCase() %>
                                     </span>
                                 </td>
                             </tr>
                             <% }) %>
                             <% if (recentLogs.length === 0) { %>
-                                <tr>
-                                    <td colspan="4" class="text-center text-muted py-4">No recent conversions found</td>
-                                </tr>
+                            <tr>
+                                <td colspan="5" class="text-center py-5">
+                                    <i class="ti ti-activity" style="font-size:40px;color:#dadce0;display:block;margin-bottom:8px;"></i>
+                                    <p class="text-muted mb-0" style="font-size:13px;">No conversions uploaded yet</p>
+                                </td>
+                            </tr>
                             <% } %>
                         </tbody>
                     </table>
@@ -78,4 +153,5 @@
             </div>
         </div>
     </div>
+
 </div>

@@ -24,6 +24,7 @@
         "helmet": "^7.1.0",
         "mongoose": "^8.0.0",
         "morgan": "^1.10.0",
+        "node-schedule": "^2.1.1",
         "nodemailer": "^8.0.3",
         "qs": "^6.11.2",
         "winston": "^3.11.0"

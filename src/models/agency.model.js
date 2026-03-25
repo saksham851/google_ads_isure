@@ -1,21 +1,41 @@
 const mongoose = require('mongoose');
 
+const conversionMappingSchema = new mongoose.Schema({
+    pipelineStageKeyword: { type: String }, // e.g. "purchased", "closed won"
+    conversionActionId:   { type: String }, // Google Ads Conversion Action ID
+    conversionActionName: { type: String }, // Human-readable name for display
+    conversionValue:      { type: Number, default: 0 }
+}, { _id: false });
+
 const agencySchema = new mongoose.Schema({
-    agencyId: { type: String, required: true, unique: true }, // GHL Company/Agency ID
-    locationId: { type: String, unique: true, sparse: true }, // GHL Location ID if installed per location
+    agencyId:   { type: String, required: true, unique: true }, // GHL Company/Agency ID
+    locationId: { type: String, unique: true, sparse: true },   // GHL Location ID (sub-account)
     agencyName: { type: String },
-    email: { type: String },
-    phone: { type: String },
+    email:      { type: String },
+    phone:      { type: String },
 
-    // GHL OAuth Tokens
-    ghlAccessToken: { type: String },
+    // ── GHL OAuth Tokens ────────────────────────────────────────────
+    ghlAccessToken:  { type: String },
     ghlRefreshToken: { type: String },
-    ghlTokenExpiry: { type: Date },
+    ghlTokenExpiry:  { type: Date },
 
-    // Google Ads integration per agency (optional if they use their own account)
-    googleAdsCustomerId: { type: String },
+    // ── Google Ads OAuth Tokens ─────────────────────────────────────
+    googleAccessToken:  { type: String },
     googleRefreshToken: { type: String },
-    googleAccessToken: { type: String },
+    googleTokenExpiry:  { type: Date },
+
+    // ── Google Ads Account Selection ────────────────────────────────
+    // The MCC (Manager) account the user selected
+    googleMccId:          { type: String }, // e.g. "1234567890"
+    googleMccName:        { type: String },
+
+    // The client (sub) account under the MCC
+    googleAdsCustomerId:  { type: String }, // e.g. "9876543210"
+    googleAdsAccountName: { type: String },
+
+    // ── Conversion Action Mappings ──────────────────────────────────
+    // Maps pipeline stage keywords → conversion actions
+    conversionMappings: [conversionMappingSchema],
 
     activeCampaigns: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Campaign' }],
     isActive: { type: Boolean, default: true }

@@ -1,66 +1,93 @@
 const googleAdsIntegration = require('../integrations/googleAds.integration');
-const ConversionLog = require('../models/conversionLog.model');
+const ConversionLog        = require('../models/conversionLog.model');
 const { formatForGoogleAds } = require('../utils/dateFormatter');
-const logger = require('../utils/logger');
+const logger               = require('../utils/logger');
 
 class GoogleAdsService {
-    async processConversion(lead, campaign, agency, conversionValue = 0) {
+
+    /**
+     * Process a conversion for a lead that has a gclid.
+     * Finds the correct conversion action by matching the pipeline stage keyword.
+     */
+    async processConversion(lead, agency, conversionValue = 0) {
         if (!lead.gclid) {
-            logger.info(`Lead ${lead.ghlContactId} has no GCLID. Skipping offline conversion upload.`);
+            logger.info(`[GoogleAds] Lead ${lead.ghlContactId} has no GCLID. Skipping.`);
             return { success: false, reason: 'No GCLID' };
         }
 
-        const customerId = agency.googleAdsCustomerId?.toString().replace(/-/g, ''); // Remove dashes
-        if (!customerId || !/^\d{10}$/.test(customerId)) {
-            logger.error(`Agency ${agency._id} has an invalid Google Ads Customer ID: ${agency.googleAdsCustomerId}. It must be a 10-digit number.`);
-            return { success: false, reason: 'Invalid Customer ID' };
-        }
-
-        const conversionActionId = campaign.googleAdsConversionActionId;
-        if (!conversionActionId) {
-            logger.error(`Campaign ${campaign._id} doesn't have a mapped Conversion Action ID.`);
-            return { success: false, reason: 'No Conversion Action ID mapped' };
-        }
-
-        const conversionTime = formatForGoogleAds(new Date());
-
-        const conversionData = {
-            gclid: lead.gclid,
-            conversion_action: `customers/${customerId}/conversionActions/${conversionActionId}`,
-            conversion_date_time: conversionTime,
-            conversion_value: conversionValue > 0 ? conversionValue : lead.conversionValue || 1,
-            currency_code: 'USD'
-        };
-
-        const logRecord = new ConversionLog({
-            leadId: lead._id,
-            gclid: lead.gclid,
-            conversionTime,
-            conversionValue: conversionData.conversionValue,
-            conversionAction: conversionActionId,
-            status: 'pending'
-        });
-
         if (!agency.googleRefreshToken) {
-            logger.error(`Agency ${agency._id} has no Google Refresh Token. Skipping conversion.`);
+            logger.error(`[GoogleAds] Agency ${agency._id} has no Google Refresh Token.`);
             return { success: false, reason: 'No Refresh Token' };
         }
 
+        const customerId = agency.googleAdsCustomerId?.toString().replace(/-/g, '');
+        if (!customerId) {
+            logger.error(`[GoogleAds] Agency ${agency._id} has no Google Ads Customer ID set.`);
+            return { success: false, reason: 'No Customer ID' };
+        }
+
+        // ── Find the matching conversion action ──────────────────────────
+        let conversionActionId   = null;
+        let conversionActionName = null;
+
+        if (agency.conversionMappings && agency.conversionMappings.length > 0) {
+            const stage   = (lead.pipelineStage || '').toLowerCase();
+            const mapping = agency.conversionMappings.find(m =>
+                stage.includes((m.pipelineStageKeyword || '').toLowerCase())
+            );
+            if (mapping) {
+                conversionActionId   = mapping.conversionActionId;
+                conversionActionName = mapping.conversionActionName;
+                // Use mapping value if no value was passed
+                if (!conversionValue && mapping.conversionValue) {
+                    conversionValue = mapping.conversionValue;
+                }
+            }
+        }
+
+        if (!conversionActionId) {
+            logger.warn(`[GoogleAds] No conversion action mapped for stage: "${lead.pipelineStage}". Skipping.`);
+            return { success: false, reason: 'No Conversion Action mapped for this stage' };
+        }
+
+        const conversionTime = formatForGoogleAds(new Date());
+        const conversionData = {
+            gclid:              lead.gclid,
+            conversion_action:  `customers/${customerId}/conversionActions/${conversionActionId}`,
+            conversion_date_time: conversionTime,
+            conversion_value:   conversionValue > 0 ? conversionValue : (lead.conversionValue || 1),
+            currency_code:      'USD'
+        };
+
+        // ── Save a pending log entry ──────────────────────────────────────
+        const logRecord = new ConversionLog({
+            agencyId:        agency._id,
+            leadId:          lead._id,
+            gclid:           lead.gclid,
+            conversionTime,
+            conversionValue: conversionData.conversion_value,
+            conversionAction: conversionActionId,
+            status:          'pending'
+        });
+        await logRecord.save();
+
+        // ── Upload to Google Ads ──────────────────────────────────────────
         try {
             const response = await googleAdsIntegration.uploadOfflineConversion({
                 customerId,
-                refreshToken: agency.googleRefreshToken, // Pass the dynamic token
+                mccId:        agency.googleMccId,
+                refreshToken: agency.googleRefreshToken,
                 conversionData
             });
 
-
-            logRecord.status = 'success';
+            logRecord.status            = 'success';
             logRecord.googleAdsResponse = response;
             await logRecord.save();
 
+            logger.info(`[GoogleAds] Conversion uploaded for lead ${lead._id} (action: ${conversionActionName})`);
             return { success: true, response };
         } catch (error) {
-            logRecord.status = 'failed';
+            logRecord.status       = 'failed';
             logRecord.errorMessage = error.message;
             await logRecord.save();
             throw error;

@@ -1,75 +1,123 @@
-const Lead = require('../models/lead.model');
-const Agency = require('../models/agency.model');
-const Campaign = require('../models/campaign.model');
+const Lead           = require('../models/lead.model');
+const Agency         = require('../models/agency.model');
 const googleAdsService = require('./googleAds.service');
-const logger = require('../utils/logger');
+const logger         = require('../utils/logger');
 
 class WebhookService {
+
+    /**
+     * Handle an incoming GHL webhook payload.
+     * Supports multiple GCLID field locations GHL may use.
+     */
     async handleGHLWebhook(payload) {
-        logger.info('Received GHL Webhook payload');
+        logger.info('[Webhook] Received GHL payload');
 
         const {
-            contact_id, location_id, email, phone, first_name, last_name, tags, customData, workflow
+            contact_id,
+            location_id,
+            email,
+            phone,
+            first_name,
+            last_name,
+            tags,
+            customData,
+            customFields,       // GHL often sends custom fields here
+            contact,            // Some GHL versions wrap data under "contact"
+            workflow,
+            pipeline_stage,
+            opportunity
         } = payload;
 
-        if (!contact_id) {
-            throw new Error("Payload missing contact_id");
+        const contactId  = contact_id  || contact?.id;
+        const locationId = location_id || contact?.locationId;
+
+        if (!contactId) {
+            throw new Error('Payload missing contact_id');
+        }
+        if (!locationId) {
+            throw new Error('Payload missing location_id — cannot route to agency');
         }
 
-        // Attempt to parse out GCLID & UTMs (these could be custom fields mapped in GHL or tags, context dependent)
-        // Assuming customData or specific payload structure carries tracking parameters.
-        let gclid = customData?.gclid || null;
-        let pipelineStage = workflow?.name || 'New Lead'; // Just for context, mapping depends on exactly how webhook is configured
+        // ── 1. Extract GCLID from wherever GHL puts it ───────────────────
+        // GHL may send it as: customData.gclid, customFields array, or direct field
+        let gclid = null;
 
-        // Check if conversion happens - "Purchased" or specific tag/stage
-        const isConvertedStage = (tags && tags.includes('Purchased')) || pipelineStage.toLowerCase().includes('purchased');
-        const conversionValue = payload?.value || 0;
+        // Direct field
+        if (payload.gclid)            gclid = payload.gclid;
+        // customData object
+        if (!gclid && customData?.gclid) gclid = customData.gclid;
+        // customFields array (GHL format: [{id: "...", value: "..."}])
+        if (!gclid && Array.isArray(customFields)) {
+            const gclidField = customFields.find(f =>
+                (f.name || '').toLowerCase().includes('gclid') ||
+                (f.id   || '').toLowerCase().includes('gclid')
+            );
+            if (gclidField) gclid = gclidField.value;
+        }
+        // contact.customFields
+        if (!gclid && Array.isArray(contact?.customFields)) {
+            const gclidField = contact.customFields.find(f =>
+                (f.name || '').toLowerCase().includes('gclid') ||
+                (f.id   || '').toLowerCase().includes('gclid')
+            );
+            if (gclidField) gclid = gclidField.value;
+        }
 
-        // 1. Resolve Agency and Campaign
-        logger.info(`Resolving Agency for Location: ${location_id}`);
-        const agency = await Agency.findOne({ locationId: location_id });
+        // ── 2. Determine pipeline stage for conversion mapping ────────────
+        const pipelineStage = pipeline_stage
+            || opportunity?.pipeline_stage_name
+            || workflow?.name
+            || 'New Lead';
+
+        // Determine if this event represents a conversion
+        const tagList           = Array.isArray(tags) ? tags : [];
+        const isConvertedStage  = tagList.some(t => t.toLowerCase().includes('purchased'))
+            || (pipelineStage || '').toLowerCase().includes('purchased')
+            || (pipelineStage || '').toLowerCase().includes('closed won')
+            || (pipelineStage || '').toLowerCase().includes('won');
+        const conversionValue   = payload.value || opportunity?.monetary_value || 0;
+
+        // ── 3. Find the agency by locationId ─────────────────────────────
+        const agency = await Agency.findOne({ locationId });
         if (!agency) {
-            logger.error(`Agency not found for location: ${location_id}`);
-            throw new Error(`Unrecognized location: ${location_id}. Ensure App is installed correctly.`);
+            logger.error(`[Webhook] No agency for location: ${locationId}`);
+            throw new Error(`Unknown location: ${locationId}. Install the app first.`);
         }
 
+        // Warn loudly if Google isn't connected yet
         if (!agency.googleRefreshToken) {
-            logger.error(`No Google Refresh Token found for agency: ${location_id}`);
-        } else {
-            logger.info(`Found Google Refresh Token for agency: ${location_id}`);
+            logger.warn(`[Webhook] Agency ${agency._id} has no Google Refresh Token — conversion will be skipped`);
+        }
+        if (!agency.googleAdsCustomerId) {
+            logger.warn(`[Webhook] Agency ${agency._id} has no Google Ads Customer ID — conversion will be skipped`);
         }
 
-
-        // To mock routing, we assume a default campaign for this demo if an exact matching mechanism is absent
-        const campaign = await Campaign.findOne({ agencyId: agency._id, status: 'active' });
-        if (!campaign && isConvertedStage) {
-            throw new Error(`No active campaigns set up for location ${location_id}. Can't route conversion.`);
-        }
-
-        // 2. Insert or update the Lead
+        // ── 4. Upsert the Lead record ─────────────────────────────────────
         const lead = await Lead.findOneAndUpdate(
-            { ghlContactId: contact_id },
+            { ghlContactId: contactId },
             {
-                name: `${first_name || ''} ${last_name || ''}`.trim(),
-                email: email,
-                phone: phone,
-                agencyId: agency._id,
-                locationId: location_id,
-                $set: gclid ? { gclid } : {}, // Update GCLID if we received one
+                name:           `${first_name || ''} ${last_name || ''}`.trim(),
+                email:          email,
+                phone:          phone,
+                agencyId:       agency._id,
+                locationId,
                 pipelineStage,
-                conversionValue: conversionValue,
-                isConverted: isConvertedStage || false
+                conversionValue,
+                isConverted:    isConvertedStage,
+                ...(gclid ? { gclid } : {})
             },
             { upsert: true, new: true }
         );
 
-        // 3. Trigger Google Ads API if converted and has gclid
+        logger.info(`[Webhook] Lead upserted: ${lead._id} | stage: "${pipelineStage}" | gclid: ${gclid || 'none'} | converted: ${isConvertedStage}`);
+
+        // ── 5. Upload conversion if conditions are met ────────────────────
         if (isConvertedStage && lead.gclid) {
-            logger.info(`Triggering Conversion Upload for Lead: ${lead._id}`);
-            await googleAdsService.processConversion(lead, campaign, agency, conversionValue);
+            logger.info(`[Webhook] Triggering conversion upload for lead ${lead._id}`);
+            await googleAdsService.processConversion(lead, agency, conversionValue);
         }
 
-        return { success: true, leadId: lead._id };
+        return { success: true, leadId: lead._id, gclid: lead.gclid };
     }
 }
 

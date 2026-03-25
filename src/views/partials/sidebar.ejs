@@ -9,8 +9,8 @@
     <div class="navbar-wrapper">
         <div class="m-header justify-content-center">
             <a href="/dashboard" class="b-brand">
-                <img src="/assets/images/isuremedia-logo.svg" class="img-fluid logo-lg" alt="logo"
-                    onerror="this.src='/assets/images/isuremedia-logo.webp'" style="max-height: 55px;">
+                <img src="/assets/images/isuremedia-logo.webp" class="img-fluid logo-lg" alt="logo"
+                     onerror="this.src='/assets/images/isuremedia-logo.webp'" style="max-height: 55px;">
             </a>
         </div>
         <div class="navbar-content">
@@ -40,8 +40,14 @@
                     class="pc-item <%= typeof activePage !== 'undefined' && activePage === 'agencies' ? 'active' : '' %>">
                     <a href="/agencies" class="pc-link">
                         <span class="pc-micon"><i class="ti ti-building"></i></span>
-                        <span class="pc-mtext">Agencies</span>
+                        <span class="pc-mtext">Sub-Accounts</span>
                     </a>
+                </li>
+
+                <li class="pc-item pc-caption">
+                    <label class="fw-bold text-uppercase small"
+                        style="letter-spacing: 1px; color: #94a3b8;">Monitoring</label>
+                    <i class="ti ti-activity"></i>
                 </li>
 
                 <li class="pc-item <%= typeof activePage !== 'undefined' && activePage === 'logs' ? 'active' : '' %>">
@@ -54,7 +60,7 @@
                 <li
                     class="pc-item <%= typeof activePage !== 'undefined' && activePage === 'webhooks' ? 'active' : '' %>">
                     <a href="/webhooks-logs" class="pc-link">
-                        <span class="pc-micon"><i class="ti ti-webhook"></i></span>
+                        <span class="pc-micon"><i class="ti ti-plug"></i></span>
                         <span class="pc-mtext">Webhook Logs</span>
                     </a>
                 </li>

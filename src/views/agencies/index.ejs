@@ -1,61 +1,151 @@
+<%
+    var agencies = typeof agencies !== 'undefined' ? agencies : [];
+%>
 <div class="row">
-    <div class="col-sm-12">
-        <div class="card table-card mt-3">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Configured Agencies</h5>
-                <a href="/agencies/create" class="btn btn-primary d-inline-flex align-items-center">
-                    <i class="ti ti-plus me-1"></i> Add Agency
+    <div class="col-12">
+
+        <!-- Flash Messages -->
+        <% if (typeof success !== 'undefined' && success && success.length > 0) { %>
+        <div class="alert alert-success alert-dismissible fade show d-flex align-items-center mb-4" role="alert">
+            <i class="ti ti-circle-check me-2"></i> <%= success %>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+        </div>
+        <% } %>
+        <% if (typeof error !== 'undefined' && error && error.length > 0) { %>
+        <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center mb-4" role="alert">
+            <i class="ti ti-alert-circle me-2"></i> <%= error %>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+        </div>
+        <% } %>
+
+        <!-- Header Row -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h4 class="mb-1 fw-semibold" style="color:#202124;">Sub-Account Connections</h4>
+                <p class="text-muted mb-0" style="font-size:14px;">Each row is a GHL sub-account with its own GHL & Google Ads connection.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="/auth/install" id="btn-connect-ghl" class="btn btn-outline-primary d-inline-flex align-items-center gap-2">
+                    <svg width="16" height="16" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="20" cy="20" r="20" fill="#FF6B35"/>
+                        <text x="50%" y="56%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="18" font-weight="bold">G</text>
+                    </svg>
+                    Connect with GoHighLevel
+                </a>
+                <a href="/agencies/create" class="btn btn-primary d-inline-flex align-items-center gap-1">
+                    <i class="ti ti-plus"></i> Add Manually
                 </a>
             </div>
-            <div class="card-body pt-0">
+        </div>
+
+        <div class="card table-card">
+            <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table mb-0">
-                        <thead>
+                    <table class="table mb-0" id="agencies-table">
+                        <thead style="background:#f8f9fa; border-bottom:2px solid #dadce0;">
                             <tr>
-                                <th>Agency Name</th>
-                                <th>GHL Agency ID</th>
-                                <th>GAds Customer ID</th>
-                                <th>Status</th>
-                                <th>Webhook URL</th>
-                                <th class="text-center">Action</th>
+                                <th class="px-4 py-3" style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#5f6368;">Sub-Account</th>
+                                <th class="py-3" style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#5f6368;">Location ID</th>
+                                <th class="py-3" style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#5f6368;">GHL Status</th>
+                                <th class="py-3" style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#5f6368;">Google Ads</th>
+                                <th class="py-3" style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#5f6368;">Customer ID</th>
+                                <th class="py-3" style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#5f6368;">Webhook URL</th>
+                                <th class="py-3 text-center" style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#5f6368;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             <% agencies.forEach(agency => { %>
                             <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="flex-shrink-0">
-                                            <div class="avtar avtar-s bg-light-primary text-primary"><%= agency.agencyName ? agency.agencyName.charAt(0).toUpperCase() : 'A' %></div>
+                                <td class="px-4 py-3">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div style="width:38px;height:38px;border-radius:50%;background:#e8f0fe;display:flex;align-items:center;justify-content:center;font-weight:700;color:#1a73e8;font-size:15px;">
+                                            <%= agency.agencyName ? agency.agencyName.charAt(0).toUpperCase() : 'A' %>
                                         </div>
-                                        <div class="flex-grow-1 ms-3">
-                                            <h6 class="mb-0"><%= agency.agencyName || 'Unnamed Agency' %></h6>
+                                        <div>
+                                            <div class="fw-semibold" style="color:#202124;"><%= agency.agencyName || 'Unnamed' %></div>
+                                            <div style="font-size:12px;color:#70757a;"><%= agency.agencyId %></div>
                                         </div>
                                     </div>
                                 </td>
-                                <td><code><%= agency.agencyId %></code></td>
-                                <td><%= agency.googleAdsCustomerId || 'Not Linked' %></td>
-                                <td>
-                                    <span class="badge bg-light-<%= agency.isActive ? 'success' : 'warning' %> text-<%= agency.isActive ? 'success' : 'warning' %>">
-                                        <%= agency.isActive ? 'ACTIVE' : 'INACTIVE' %>
-                                    </span>
+                                <td class="py-3">
+                                    <code style="font-size:12px;background:#f1f3f4;padding:2px 6px;border-radius:4px;">
+                                        <%= agency.locationId || '—' %>
+                                    </code>
                                 </td>
-                                <td>
-                                    <small class="text-muted"><code><%= baseUrl %>/webhooks/ghl/<%= agency.agencyId %></code></small>
+                                <td class="py-3">
+                                    <% if (agency.ghlAccessToken) { %>
+                                        <span class="badge d-inline-flex align-items-center gap-1" style="background:#e6f4ea;color:#1e8e3e;font-size:12px;border-radius:20px;padding:4px 10px;">
+                                            <i class="ti ti-check" style="font-size:13px;"></i> Connected
+                                        </span>
+                                    <% } else { %>
+                                        <span class="badge d-inline-flex align-items-center gap-1" style="background:#fce8e6;color:#c5221f;font-size:12px;border-radius:20px;padding:4px 10px;">
+                                            <i class="ti ti-x" style="font-size:13px;"></i> Not Connected
+                                        </span>
+                                    <% } %>
                                 </td>
-                                <td class="text-center">
-                                    <a href="#!" class="btn btn-link-secondary btn-sm"><i class="ti ti-edit"></i></a>
-                                    <a href="#!" class="btn btn-link-danger btn-sm"><i class="ti ti-trash"></i></a>
+                                <td class="py-3">
+                                    <% if (agency.googleRefreshToken) { %>
+                                        <span class="badge d-inline-flex align-items-center gap-1" style="background:#e6f4ea;color:#1e8e3e;font-size:12px;border-radius:20px;padding:4px 10px;">
+                                            <i class="ti ti-check" style="font-size:13px;"></i> Connected
+                                        </span>
+                                    <% } else { %>
+                                        <% if (agency.locationId) { %>
+                                        <a href="/auth/google-login?locationId=<%= agency.locationId %>" 
+                                           class="badge d-inline-flex align-items-center gap-1 text-decoration-none"
+                                           style="background:#e8f0fe;color:#1a73e8;font-size:12px;border-radius:20px;padding:4px 10px;cursor:pointer;">
+                                            <i class="ti ti-brand-google" style="font-size:13px;"></i> Connect
+                                        </a>
+                                        <% } else { %>
+                                        <span class="text-muted" style="font-size:12px;">No Location ID</span>
+                                        <% } %>
+                                    <% } %>
+                                </td>
+                                <td class="py-3">
+                                    <% if (agency.googleAdsCustomerId) { %>
+                                        <code style="font-size:12px;background:#f1f3f4;padding:2px 6px;border-radius:4px;"><%= agency.googleAdsCustomerId %></code>
+                                    <% } else { %>
+                                        <span class="text-muted" style="font-size:12px;">Not set</span>
+                                    <% } %>
+                                </td>
+                                <td class="py-3">
+                                    <% if (agency.locationId) { %>
+                                    <div class="d-flex align-items-center gap-1">
+                                        <code style="font-size:11px;background:#f1f3f4;padding:2px 6px;border-radius:4px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                                            <%= baseUrl %>/webhooks/ghl
+                                        </code>
+                                        <button class="btn btn-sm p-1" onclick="copyWebhook('<%= baseUrl %>/webhooks/ghl')" title="Copy">
+                                            <i class="ti ti-copy" style="font-size:14px;color:#5f6368;"></i>
+                                        </button>
+                                    </div>
+                                    <% } else { %>
+                                    <span class="text-muted" style="font-size:12px;">—</span>
+                                    <% } %>
+                                </td>
+                                <td class="py-3 text-center">
+                                    <div class="d-flex justify-content-center gap-1">
+                                        <% if (agency.locationId) { %>
+                                        <a href="/agencies/<%= agency.locationId %>/detail" 
+                                           class="btn btn-sm d-inline-flex align-items-center gap-1"
+                                           style="background:#e8f0fe;color:#1a73e8;border:none;border-radius:6px;font-size:12px;font-weight:500;padding:5px 12px;">
+                                            <i class="ti ti-settings" style="font-size:13px;"></i> Configure
+                                        </a>
+                                        <% } %>
+                                    </div>
                                 </td>
                             </tr>
                             <% }) %>
+
                             <% if (agencies.length === 0) { %>
-                                <tr>
-                                    <td colspan="6" class="text-center py-5">
-                                        <p class="text-muted mb-3">No agencies configured yet</p>
-                                        <a href="/agencies/create" class="btn btn-outline-primary btn-sm">Configure your first agency</a>
-                                    </td>
-                                </tr>
+                            <tr>
+                                <td colspan="7" class="text-center py-5">
+                                    <div style="color:#9aa0a6;">
+                                        <i class="ti ti-building-store" style="font-size:48px;display:block;margin-bottom:12px;"></i>
+                                        <p class="fw-semibold mb-1" style="color:#5f6368;">No sub-accounts yet</p>
+                                        <p class="mb-3" style="font-size:14px;">Click "Connect with GoHighLevel" to install the app in a sub-account.</p>
+                                        <a href="/auth/install" class="btn btn-primary btn-sm">Connect with GoHighLevel</a>
+                                    </div>
+                                </td>
+                            </tr>
                             <% } %>
                         </tbody>
                     </table>
@@ -64,3 +154,11 @@
         </div>
     </div>
 </div>
+
+<script>
+function copyWebhook(url) {
+    navigator.clipboard.writeText(url).then(() => {
+        Swal.fire({ icon: 'success', title: 'Copied!', text: 'Webhook URL copied to clipboard.', timer: 1500, showConfirmButton: false });
+    });
+}
+</script>

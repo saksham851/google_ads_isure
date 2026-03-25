@@ -1,0 +1,480 @@
+<%
+    var agency      = typeof agency      !== 'undefined' ? agency      : {};
+    var recentLogs  = typeof recentLogs  !== 'undefined' ? recentLogs  : [];
+    var webhookLogs = typeof webhookLogs !== 'undefined' ? webhookLogs : [];
+
+    var ghlConnected    = agency.ghlAccessToken    ? true : false;
+    var googleConnected = agency.googleRefreshToken ? true : false;
+    var mccSet          = agency.googleMccId        ? true : false;
+    var customerSet     = agency.googleAdsCustomerId ? true : false;
+    var mappingsSet     = agency.conversionMappings && agency.conversionMappings.length > 0;
+%>
+
+<style>
+.step-card { border:1px solid #dadce0; border-radius:10px; background:#fff; transition:box-shadow .2s; }
+.step-num { width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0; }
+.step-done   { background:#e6f4ea; color:#1e8e3e; }
+.step-active { background:#e8f0fe; color:#1a73e8; }
+.step-todo   { background:#f1f3f4; color:#9aa0a6; }
+.conn-pill { display:inline-flex;align-items:center;gap:5px;border-radius:20px;padding:4px 12px;font-size:13px;font-weight:500; }
+.conn-ok  { background:#e6f4ea; color:#1e8e3e; }
+.conn-no  { background:#fce8e6; color:#c5221f; }
+.gads-select { padding:8px 12px;border:1px solid #dadce0;border-radius:6px;width:100%;font-size:14px;color:#202124;background:#fff; }
+.gads-select:focus { outline:none;border-color:#1a73e8;box-shadow:0 0 0 2px rgba(26,115,232,.2); }
+.mapping-row { display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:center;margin-bottom:10px; }
+.mapping-row input,.mapping-row select { padding:8px 10px;border:1px solid #dadce0;border-radius:6px;font-size:13px; }
+.log-pill-success { background:#e6f4ea;color:#1e8e3e; }
+.log-pill-failed  { background:#fce8e6;color:#c5221f; }
+.log-pill-pending { background:#fef9e7;color:#b06000; }
+</style>
+
+<div class="row g-4">
+
+    <!-- ── Left Column: Status + Steps ──────────────────────────────── -->
+    <div class="col-lg-8">
+
+        <!-- Agency Status Bar -->
+        <div class="card step-card mb-4 p-4">
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+                <div style="width:52px;height:52px;border-radius:50%;background:#e8f0fe;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#1a73e8;">
+                    <%= (agency.agencyName || 'A').charAt(0).toUpperCase() %>
+                </div>
+                <div class="flex-grow-1">
+                    <h5 class="mb-0 fw-bold" style="color:#202124;"><%= agency.agencyName || 'Unnamed Agency' %></h5>
+                    <div style="font-size:13px;color:#70757a;">Location ID: <code><%= agency.locationId || '—' %></code></div>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    <span class="conn-pill <%= ghlConnected ? 'conn-ok' : 'conn-no' %>">
+                        <i class="ti ti-<%= ghlConnected ? 'check' : 'x' %>"></i>
+                        GHL <%= ghlConnected ? 'Connected' : 'Not Connected' %>
+                    </span>
+                    <span class="conn-pill <%= googleConnected ? 'conn-ok' : 'conn-no' %>">
+                        <i class="ti ti-<%= googleConnected ? 'check' : 'x' %>"></i>
+                        Google Ads <%= googleConnected ? 'Connected' : 'Not Connected' %>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Step 1: GHL Connection ──────────────────────────────── -->
+        <div class="card step-card mb-3 p-4">
+            <div class="d-flex align-items-start gap-3">
+                <div class="step-num <%= ghlConnected ? 'step-done' : 'step-active' %>">
+                    <% if (ghlConnected) { %><i class="ti ti-check" style="font-size:16px;"></i><% } else { %>1<% } %>
+                </div>
+                <div class="flex-grow-1">
+                    <h6 class="mb-1 fw-semibold" style="color:#202124;">Connect GoHighLevel</h6>
+                    <p class="text-muted mb-3" style="font-size:13px;">
+                        Install the app in this sub-account. GHL will redirect back here with your access tokens.
+                    </p>
+                    <% if (ghlConnected) { %>
+                    <div class="d-flex align-items-center gap-3 flex-wrap">
+                        <span class="conn-pill conn-ok"><i class="ti ti-check"></i> App Installed</span>
+                        <span style="font-size:12px;color:#70757a;">
+                            Token expires: <%= agency.ghlTokenExpiry ? new Date(agency.ghlTokenExpiry).toLocaleString() : 'Unknown' %>
+                        </span>
+                        <a href="/auth/install" class="btn btn-sm btn-outline-secondary">Re-install</a>
+                    </div>
+                    <% } else { %>
+                    <a href="/auth/install" id="btn-ghl-install" class="btn btn-primary d-inline-flex align-items-center gap-2">
+                        <i class="ti ti-brand-hipchat"></i> Connect with GoHighLevel
+                    </a>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Step 2: Google Ads OAuth ───────────────────────────── -->
+        <div class="card step-card mb-3 p-4">
+            <div class="d-flex align-items-start gap-3">
+                <div class="step-num <%= googleConnected ? 'step-done' : (ghlConnected ? 'step-active' : 'step-todo') %>">
+                    <% if (googleConnected) { %><i class="ti ti-check" style="font-size:16px;"></i><% } else { %>2<% } %>
+                </div>
+                <div class="flex-grow-1">
+                    <h6 class="mb-1 fw-semibold" style="color:#202124;">Connect Google Ads</h6>
+                    <p class="text-muted mb-3" style="font-size:13px;">
+                        OAuth with Google. We'll automatically get your access &amp; refresh tokens. No manual entry needed.
+                    </p>
+                    <% if (googleConnected) { %>
+                    <div class="d-flex align-items-center gap-3 flex-wrap">
+                        <span class="conn-pill conn-ok"><i class="ti ti-check"></i> OAuth Complete</span>
+                        <a href="/auth/google-login?locationId=<%= agency.locationId %>" class="btn btn-sm btn-outline-secondary">Re-authorize</a>
+                    </div>
+                    <% } else { %>
+                    <% if (agency.locationId) { %>
+                    <a href="/auth/google-login?locationId=<%= agency.locationId %>" id="btn-google-login"
+                       class="btn btn-outline-primary d-inline-flex align-items-center gap-2 <%= !ghlConnected ? 'disabled' : '' %>">
+                        <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#4285F4" d="M24 9.5c3.1 0 5.9 1.1 8.1 2.9l6-6C34.5 3.5 29.6 1.5 24 1.5 14.8 1.5 7 7.4 3.9 15.5l7 5.4C12.5 14.3 17.8 9.5 24 9.5z"/><path fill="#34A853" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.7-2.1 5-4.4 6.5l7 5.4c4.1-3.8 6.5-9.4 6.5-16.4z"/><path fill="#FBBC04" d="M10.9 28.6c-.4-1.3-.7-2.6-.7-4s.2-2.7.7-4l-7-5.4C2.5 17.8 1.5 20.8 1.5 24s1 6.2 2.4 8.8l7-5.4v.2z"/><path fill="#EA4335" d="M24 46.5c5.6 0 10.3-1.8 13.8-5l-7-5.4c-1.9 1.3-4.3 2-6.8 2-6.2 0-11.5-4.1-13.4-9.8l-7 5.4C7 39.6 14.8 46.5 24 46.5z"/></svg>
+                        Connect with Google Ads
+                    </a>
+                    <% } else { %>
+                    <p class="text-warning mb-0" style="font-size:13px;"><i class="ti ti-alert-triangle me-1"></i>Connect GoHighLevel first to get a Location ID.</p>
+                    <% } %>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Step 3: Select Accounts & Map Conversions ──────────── -->
+        <div class="card step-card mb-3 p-4 <%= !googleConnected ? 'opacity-50' : '' %>">
+            <div class="d-flex align-items-start gap-3">
+                <div class="step-num <%= (customerSet && mappingsSet) ? 'step-done' : (googleConnected ? 'step-active' : 'step-todo') %>">
+                    <% if (customerSet && mappingsSet) { %><i class="ti ti-check" style="font-size:16px;"></i><% } else { %>3<% } %>
+                </div>
+                <div class="flex-grow-1">
+                    <h6 class="mb-1 fw-semibold" style="color:#202124;">Select Accounts &amp; Map Conversions</h6>
+                    <p class="text-muted mb-4" style="font-size:13px;">
+                        Select your Manager Account → Client Account → map pipeline stages to conversion actions.
+                    </p>
+
+                    <% if (!googleConnected) { %>
+                    <p class="text-muted" style="font-size:13px;"><i class="ti ti-lock me-1"></i> Connect Google Ads first to unlock this step.</p>
+                    <% } else { %>
+
+                    <form id="mapping-form">
+                        <input type="hidden" id="locationId" value="<%= agency.locationId %>">
+
+                        <!-- Manager Account -->
+                        <div class="mb-3">
+                            <label class="form-label fw-medium" style="font-size:13px;">Manager Account (MCC)</label>
+                            <div class="d-flex gap-2">
+                                <select class="gads-select" id="mcc-select" onchange="loadClientAccounts()" style="max-width:420px;">
+                                    <option value="">— Loading Manager Accounts... —</option>
+                                </select>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="loadManagerAccounts()">
+                                    <i class="ti ti-refresh"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Client Account -->
+                        <div class="mb-3">
+                            <label class="form-label fw-medium" style="font-size:13px;">Client Account</label>
+                            <select class="gads-select" id="customer-select" onchange="loadConversionActions()" style="max-width:420px;" disabled>
+                                <option value="">— Select Manager Account first —</option>
+                            </select>
+                        </div>
+
+                        <!-- Conversion Mappings -->
+                        <div class="mb-4">
+                            <label class="form-label fw-medium" style="font-size:13px;">
+                                Conversion Action Mappings
+                                <span class="text-muted fw-normal">(map pipeline stages → conversion actions)</span>
+                            </label>
+                            <div id="mappings-container">
+                                <% if (agency.conversionMappings && agency.conversionMappings.length > 0) { %>
+                                    <% agency.conversionMappings.forEach((m, i) => { %>
+                                    <div class="mapping-row" id="mapping-<%= i %>">
+                                        <input type="text" class="mapping-keyword" placeholder='Pipeline stage keyword (e.g. "purchased")' value="<%= m.pipelineStageKeyword %>">
+                                        <select class="mapping-action" disabled>
+                                            <option value="<%= m.conversionActionId %>"><%= m.conversionActionName || m.conversionActionId %></option>
+                                        </select>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeMapping(this)">
+                                            <i class="ti ti-trash"></i>
+                                        </button>
+                                    </div>
+                                    <% }) %>
+                                <% } %>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addMappingRow()" id="btn-add-mapping" disabled>
+                                <i class="ti ti-plus me-1"></i> Add Mapping
+                            </button>
+                            <p class="text-muted mt-2 mb-0" style="font-size:12px;">
+                                "Keyword" is matched against the pipeline stage name — case-insensitive partial match.
+                            </p>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-primary" onclick="saveMapping()">
+                                <i class="ti ti-device-floppy me-1"></i> Save Configuration
+                            </button>
+                            <div id="save-status" class="d-flex align-items-center" style="font-size:13px;color:#5f6368;"></div>
+                        </div>
+                    </form>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+
+        <!-- Webhook Info -->
+        <div class="card step-card p-4" style="background:#f8f9fa;">
+            <div class="d-flex align-items-start gap-3">
+                <div class="step-num step-active">
+                    <i class="ti ti-webhook" style="font-size:16px;"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <h6 class="mb-1 fw-semibold" style="color:#202124;">Your Webhook Endpoint</h6>
+                    <p class="text-muted mb-2" style="font-size:13px;">
+                        Set this URL in GHL's Automation &gt; Webhook action. The app identifies the sub-account via <code>location_id</code> in the payload.
+                    </p>
+                    <div class="d-flex align-items-center gap-2">
+                        <code id="webhook-url" style="background:#fff;border:1px solid #dadce0;padding:8px 14px;border-radius:6px;font-size:13px;word-break:break-all;">
+                            <%= baseUrl %>/webhooks/ghl
+                        </code>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="copyWebhook()"><i class="ti ti-copy"></i> Copy</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Right Column: Recent Logs ─────────────────────────────── -->
+    <div class="col-lg-4">
+
+        <!-- Recent Conversions -->
+        <div class="card step-card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center py-3 px-4" style="background:#f8f9fa;border-bottom:1px solid #dadce0;">
+                <h6 class="mb-0 fw-semibold" style="color:#202124;">Recent Conversions</h6>
+                <span style="font-size:12px;color:#70757a;"><%= recentLogs.length %> entries</span>
+            </div>
+            <div class="card-body p-0">
+                <% if (recentLogs.length === 0) { %>
+                <div class="text-center py-4 text-muted" style="font-size:13px;">
+                    <i class="ti ti-activity" style="font-size:32px;display:block;margin-bottom:8px;"></i>
+                    No conversions yet
+                </div>
+                <% } else { %>
+                <ul class="list-unstyled mb-0">
+                    <% recentLogs.forEach(log => { %>
+                    <li style="border-bottom:1px solid #f1f3f4;padding:12px 16px;">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <code style="font-size:11px;color:#5f6368;"><%= (log.gclid || '').substring(0, 18) %>...</code>
+                                <div style="font-size:11px;color:#9aa0a6;margin-top:2px;"><%= new Date(log.createdAt).toLocaleString() %></div>
+                            </div>
+                            <span class="conn-pill log-pill-<%= log.status %>" style="font-size:11px;border-radius:12px;padding:2px 8px;">
+                                <%= log.status.toUpperCase() %>
+                            </span>
+                        </div>
+                    </li>
+                    <% }) %>
+                </ul>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- Recent Webhooks -->
+        <div class="card step-card">
+            <div class="card-header d-flex justify-content-between align-items-center py-3 px-4" style="background:#f8f9fa;border-bottom:1px solid #dadce0;">
+                <h6 class="mb-0 fw-semibold" style="color:#202124;">Recent Webhooks</h6>
+                <span style="font-size:12px;color:#70757a;"><%= webhookLogs.length %> entries</span>
+            </div>
+            <div class="card-body p-0">
+                <% if (webhookLogs.length === 0) { %>
+                <div class="text-center py-4 text-muted" style="font-size:13px;">
+                    <i class="ti ti-antenna" style="font-size:32px;display:block;margin-bottom:8px;"></i>
+                    No webhooks received yet
+                </div>
+                <% } else { %>
+                <ul class="list-unstyled mb-0">
+                    <% webhookLogs.forEach(wh => { %>
+                    <li style="border-bottom:1px solid #f1f3f4;padding:12px 16px;">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div style="font-size:12px;color:#5f6368;">
+                                <code>contact:</code> <%= wh.payload?.contact_id || 'unknown' %>
+                                <div style="font-size:11px;color:#9aa0a6;margin-top:2px;"><%= new Date(wh.createdAt).toLocaleString() %></div>
+                            </div>
+                            <span class="conn-pill log-pill-<%= wh.status === 'success' ? 'success' : (wh.status === 'error' ? 'failed' : 'pending') %>" style="font-size:11px;border-radius:12px;padding:2px 8px;">
+                                <%= (wh.status || 'pending').toUpperCase() %>
+                            </span>
+                        </div>
+                    </li>
+                    <% }) %>
+                </ul>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const locationId = '<%= agency.locationId %>';
+let conversionActionsCache = [];
+
+// ── Load Manager Accounts on page load ───────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+    <% if (googleConnected && agency.locationId) { %>
+    loadManagerAccounts();
+    <% } %>
+});
+
+async function loadManagerAccounts() {
+    const sel = document.getElementById('mcc-select');
+    sel.innerHTML = '<option value="">Loading...</option>';
+    try {
+        const r    = await fetch(`/google-ads/manager-accounts?locationId=${locationId}`);
+        const data = await r.json();
+        if (!data.success) throw new Error(data.error);
+
+        sel.innerHTML = '<option value="">— Select Manager Account —</option>';
+        data.accounts.forEach(acc => {
+            const opt = document.createElement('option');
+            opt.value        = acc.id;
+            opt.dataset.name = acc.name;
+            opt.text         = `${acc.name} (${acc.id})${acc.isManager ? ' [MCC]' : ''}`;
+            sel.appendChild(opt);
+        });
+
+        // Pre-select saved MCC
+        <% if (agency.googleMccId) { %>
+        sel.value = '<%= agency.googleMccId %>';
+        if (sel.value) loadClientAccounts();
+        <% } %>
+    } catch (e) {
+        console.error('Manager fetch error:', e);
+        sel.innerHTML = `<option value="">Error: ${e.message || 'Check terminal logs for details'}</option>`;
+    }
+}
+
+async function loadClientAccounts() {
+    const mccSel  = document.getElementById('mcc-select');
+    const custSel = document.getElementById('customer-select');
+    const mccId   = mccSel.value;
+    if (!mccId) { custSel.disabled = true; return; }
+
+    custSel.innerHTML = '<option value="">Loading client accounts...</option>';
+    custSel.disabled  = false;
+
+    try {
+        const r    = await fetch(`/google-ads/client-accounts?locationId=${locationId}&mccId=${mccId}`);
+        const data = await r.json();
+        if (!data.success) throw new Error(data.error);
+
+        custSel.innerHTML = '<option value="">— Select Client Account —</option>';
+        data.accounts.forEach(acc => {
+            const opt = document.createElement('option');
+            opt.value        = acc.id;
+            opt.dataset.name = acc.name;
+            opt.text         = `${acc.name} (${acc.id})`;
+            custSel.appendChild(opt);
+        });
+
+        // Pre-select saved customer
+        <% if (agency.googleAdsCustomerId) { %>
+        custSel.value = '<%= agency.googleAdsCustomerId %>';
+        if (custSel.value) loadConversionActions();
+        <% } %>
+    } catch (e) {
+        custSel.innerHTML = `<option value="">Error: ${e.message}</option>`;
+    }
+}
+
+async function loadConversionActions() {
+    const mccId     = document.getElementById('mcc-select').value;
+    const custId    = document.getElementById('customer-select').value;
+    const addBtn    = document.getElementById('btn-add-mapping');
+    if (!custId) return;
+
+    addBtn.disabled = true;
+    addBtn.innerHTML = '<i class="ti ti-loader-2 me-1"></i> Loading actions...';
+
+    try {
+        const r    = await fetch(`/google-ads/conversion-actions?locationId=${locationId}&customerId=${custId}&mccId=${mccId}`);
+        const data = await r.json();
+        if (!data.success) throw new Error(data.error);
+
+        conversionActionsCache = data.actions;
+
+        // Refresh all existing mapping dropdowns
+        document.querySelectorAll('.mapping-action').forEach(sel => {
+            rebuildActionDropdown(sel);
+        });
+
+        addBtn.disabled = false;
+        addBtn.innerHTML = '<i class="ti ti-plus me-1"></i> Add Mapping';
+    } catch (e) {
+        addBtn.innerHTML = `<i class="ti ti-alert-circle me-1"></i> Error loading actions`;
+        console.error(e);
+    }
+}
+
+function rebuildActionDropdown(sel, selectedId = '') {
+    const current = selectedId || sel.value;
+    sel.innerHTML  = '<option value="">— Select Conversion Action —</option>';
+    sel.disabled   = false;
+    conversionActionsCache.forEach(a => {
+        const opt = document.createElement('option');
+        opt.value        = a.id;
+        opt.dataset.name = a.name;
+        opt.text         = a.name;
+        if (a.id === current) opt.selected = true;
+        sel.appendChild(opt);
+    });
+}
+
+let mappingIdx = <%= (agency.conversionMappings || []).length %>;
+
+function addMappingRow() {
+    if (conversionActionsCache.length === 0) {
+        alert('Please select a Client Account first to load conversion actions.');
+        return;
+    }
+    const container = document.getElementById('mappings-container');
+    const row       = document.createElement('div');
+    row.className   = 'mapping-row';
+    row.id          = `mapping-${mappingIdx++}`;
+    row.innerHTML = `
+        <input type="text" class="mapping-keyword" placeholder='Pipeline stage keyword, e.g. "purchased"'>
+        <select class="mapping-action"></select>
+        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeMapping(this)">
+            <i class="ti ti-trash"></i>
+        </button>`;
+    container.appendChild(row);
+    rebuildActionDropdown(row.querySelector('.mapping-action'));
+}
+
+function removeMapping(btn) {
+    btn.closest('.mapping-row').remove();
+}
+
+async function saveMapping() {
+    const mccSel    = document.getElementById('mcc-select');
+    const custSel   = document.getElementById('customer-select');
+    const statusDiv = document.getElementById('save-status');
+
+    const mccId      = mccSel.value;
+    const mccName    = mccSel.options[mccSel.selectedIndex]?.dataset?.name || '';
+    const customerId = custSel.value;
+    const custName   = custSel.options[custSel.selectedIndex]?.dataset?.name || '';
+
+    if (!customerId) {
+        statusDiv.innerHTML = '<span class="text-danger"><i class="ti ti-alert-circle me-1"></i>Please select a Client Account.</span>';
+        return;
+    }
+
+    const mappings = [];
+    document.querySelectorAll('.mapping-row').forEach(row => {
+        const keyword = row.querySelector('.mapping-keyword')?.value?.trim();
+        const actSel  = row.querySelector('.mapping-action');
+        const actId   = actSel?.value;
+        const actName = actSel?.options[actSel.selectedIndex]?.dataset?.name || actId;
+        if (keyword && actId) {
+            mappings.push({ pipelineStageKeyword: keyword, conversionActionId: actId, conversionActionName: actName });
+        }
+    });
+
+    statusDiv.innerHTML = '<i class="ti ti-loader-2 me-1"></i> Saving...';
+
+    try {
+        const r = await fetch('/google-ads/save-mapping', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ locationId, mccId, mccName, customerId, customerName: custName, conversionMappings: mappings })
+        });
+        const data = await r.json();
+        if (!data.success) throw new Error(data.error);
+
+        statusDiv.innerHTML = '<span class="text-success"><i class="ti ti-check me-1"></i>Saved successfully!</span>';
+        setTimeout(() => statusDiv.innerHTML = '', 3000);
+    } catch (e) {
+        statusDiv.innerHTML = `<span class="text-danger"><i class="ti ti-x me-1"></i>${e.message}</span>`;
+    }
+}
+
+function copyWebhook() {
+    const url = document.getElementById('webhook-url').innerText.trim();
+    navigator.clipboard.writeText(url).then(() => {
+        Swal.fire({ icon: 'success', title: 'Copied!', text: 'Webhook URL copied.', timer: 1500, showConfirmButton: false });
+    });
+}
+</script>
