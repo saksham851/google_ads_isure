@@ -6,20 +6,29 @@ dotenv.config();
 
 class GoogleAdsAuthService {
     constructor() {
-        this.oauth2Client = new google.auth.OAuth2(
-            process.env.GOOGLE_ADS_CLIENT_ID,
-            process.env.GOOGLE_ADS_CLIENT_SECRET,
-            process.env.GOOGLE_ADS_REDIRECT_URI
-        );
         this.SCOPES = ['https://www.googleapis.com/auth/adwords'];
+    }
+
+    /**
+     * Helper to build a dynamic OAuth2 client based on agency or default env
+     */
+    _getOAuthClient(agency = null) {
+        const clientId     = agency?.customGoogleAdsClientId     || process.env.GOOGLE_ADS_CLIENT_ID;
+        const clientSecret = agency?.customGoogleAdsClientSecret || process.env.GOOGLE_ADS_CLIENT_SECRET;
+        const redirectUri  = process.env.GOOGLE_ADS_REDIRECT_URI;
+
+        return new google.auth.OAuth2(clientId, clientSecret, redirectUri);
     }
 
     /**
      * Generate the Google OAuth URL.
      * We encode the locationId in the `state` param so the callback can find the agency.
      */
-    getAuthUrl(locationId) {
-        return this.oauth2Client.generateAuthUrl({
+    async getAuthUrl(locationId) {
+        const agency = await Agency.findOne({ locationId });
+        const oauth2Client = this._getOAuthClient(agency);
+
+        return oauth2Client.generateAuthUrl({
             access_type: 'offline',
             prompt:      'consent', // Force consent screen to always get a refresh_token
             scope:       this.SCOPES,
@@ -30,8 +39,11 @@ class GoogleAdsAuthService {
     /**
      * Exchange the authorization code for tokens.
      */
-    async getTokens(code) {
-        const { tokens } = await this.oauth2Client.getToken(code);
+    async getTokens(code, locationId) {
+        const agency = await Agency.findOne({ locationId });
+        const oauth2Client = this._getOAuthClient(agency);
+
+        const { tokens } = await oauth2Client.getToken(code);
         return tokens;
     }
 
@@ -44,9 +56,10 @@ class GoogleAdsAuthService {
             throw new Error(`No Google refresh token for agency ${agency._id}`);
         }
 
-        this.oauth2Client.setCredentials({ refresh_token: agency.googleRefreshToken });
+        const oauth2Client = this._getOAuthClient(agency);
+        oauth2Client.setCredentials({ refresh_token: agency.googleRefreshToken });
 
-        const { credentials } = await this.oauth2Client.refreshAccessToken();
+        const { credentials } = await oauth2Client.refreshAccessToken();
 
         const expiry = credentials.expiry_date
             ? new Date(credentials.expiry_date)

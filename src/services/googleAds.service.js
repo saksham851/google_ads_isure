@@ -77,7 +77,12 @@ class GoogleAdsService {
                 customerId,
                 mccId:        agency.googleMccId,
                 refreshToken: agency.googleRefreshToken,
-                conversionData
+                conversionData,
+                credentials: {
+                    clientId:       agency.customGoogleAdsClientId,
+                    clientSecret:   agency.customGoogleAdsClientSecret,
+                    developerToken: agency.customGoogleAdsDeveloperToken
+                }
             });
 
             logRecord.status            = 'success';

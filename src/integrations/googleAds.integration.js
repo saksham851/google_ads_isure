@@ -7,11 +7,11 @@ class GoogleAdsIntegration {
     /**
      * Build a GoogleAdsApi client authenticated with a specific refresh token.
      */
-    _buildClient() {
+    _buildClient(credentials = {}) {
         return new GoogleAdsApi({
-            client_id: process.env.GOOGLE_ADS_CLIENT_ID,
-            client_secret: process.env.GOOGLE_ADS_CLIENT_SECRET,
-            developer_token: process.env.GOOGLE_ADS_DEVELOPER_TOKEN
+            client_id:       credentials.clientId       || process.env.GOOGLE_ADS_CLIENT_ID,
+            client_secret:   credentials.clientSecret   || process.env.GOOGLE_ADS_CLIENT_SECRET,
+            developer_token: credentials.developerToken || process.env.GOOGLE_ADS_DEVELOPER_TOKEN
         });
     }
 
@@ -19,8 +19,8 @@ class GoogleAdsIntegration {
      * List all Manager (MCC) accounts accessible by this refresh token.
      * Returns an array of { id, name, currencyCode, timeZone }
      */
-    async listManagerAccounts(refreshToken) {
-        const client = this._buildClient();
+    async listManagerAccounts(refreshToken, credentials = {}) {
+        const client = this._buildClient(credentials);
         // Use an "accessible customers" query — no login_customer_id needed
         const customer = client.Customer({
             customer_id: 'NONE', // placeholder, overridden by accessible customers call
@@ -55,10 +55,16 @@ class GoogleAdsIntegration {
                         });
                     }
                 } catch (e) {
-                    // Log the full gRPC error since e.message is usually undefined for google-ads-api
+                    // Include it anyway with a fallback name!
                     const errorDetails = e.errors ? JSON.stringify(e.errors) : JSON.stringify(e);
-                    console.error(`[GoogleAds] Error querying ${id}:`, e);
                     logger.warn(`[GoogleAds] Could not query account ${id}: ${errorDetails}`);
+                    results.push({
+                        id:           String(id),
+                        name:         `Account: ${id} (Setup Incomplete)`,
+                        isManager:    true, // Assume manager as fallback so it shows in MCC list
+                        currencyCode: 'USD',
+                        timeZone:     'America/New_York'
+                    });
                 }
             }
 
@@ -74,8 +80,8 @@ class GoogleAdsIntegration {
      * List all client (sub) accounts under a given Manager (MCC) account.
      * Returns an array of { id, name, currencyCode }
      */
-    async listClientAccounts(mccId, refreshToken) {
-        const client = this._buildClient();
+    async listClientAccounts(mccId, refreshToken, credentials = {}) {
+        const client = this._buildClient(credentials);
         const mccClean = String(mccId).replace(/-/g, '');
         const manager = client.Customer({
             customer_id: mccClean,
@@ -111,8 +117,8 @@ class GoogleAdsIntegration {
      * List all conversion actions for a given customer.
      * Returns an array of { id, name, type, status }
      */
-    async listConversionActions(customerId, mccId, refreshToken) {
-        const client = this._buildClient();
+    async listConversionActions(customerId, mccId, refreshToken, credentials = {}) {
+        const client = this._buildClient(credentials);
         const custClean = String(customerId).replace(/-/g, '');
         const mccClean = mccId ? String(mccId).replace(/-/g, '') : custClean;
 
@@ -149,8 +155,8 @@ class GoogleAdsIntegration {
     /**
      * Upload an offline (click) conversion to Google Ads.
      */
-    async uploadOfflineConversion({ customerId, mccId, refreshToken, conversionData }) {
-        const client = this._buildClient();
+    async uploadOfflineConversion({ customerId, mccId, refreshToken, conversionData, credentials = {} }) {
+        const client = this._buildClient(credentials);
         const custClean = String(customerId).replace(/-/g, '');
         const mccClean = mccId ? String(mccId).replace(/-/g, '') : custClean;
 

@@ -15,9 +15,13 @@ exports.googleLogin = (req, res) => {
 
     // Store locationId in session so callback can look up the agency
     req.session.pendingGoogleLocationId = locationId;
-
-    const authUrl = googleAdsAuthService.getAuthUrl(locationId);
-    res.redirect(authUrl);
+    
+    googleAdsAuthService.getAuthUrl(locationId)
+        .then(authUrl => res.redirect(authUrl))
+        .catch(err => {
+            logger.error('[GoogleAdsAuthCtrl] googleLogin error:', err.message);
+            res.status(500).send('<h2>Error generating Google Ads Login URL.</h2>');
+        });
 };
 
 /**
@@ -39,7 +43,7 @@ exports.googleCallback = async (req, res, next) => {
         }
 
         // Exchange code for tokens
-        const tokens = await googleAdsAuthService.getTokens(code);
+        const tokens = await googleAdsAuthService.getTokens(code, locationId);
 
         // Calculate expiry
         const expiry = tokens.expiry_date

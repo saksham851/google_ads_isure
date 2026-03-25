@@ -3,6 +3,15 @@ const googleAdsIntegration = require('../integrations/googleAds.integration');
 const googleAdsAuthService = require('../services/googleAdsAuth.service');
 const logger              = require('../utils/logger');
 
+// Helper to get custom credentials for an agency
+const getCustomCreds = (agency) => {
+    return {
+        clientId:       agency.customGoogleAdsClientId,
+        clientSecret:   agency.customGoogleAdsClientSecret,
+        developerToken: agency.customGoogleAdsDeveloperToken
+    };
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /google-ads/manager-accounts?locationId=xxx
 // Returns list of Manager (MCC) accounts for the agency's Google token
@@ -16,7 +25,7 @@ exports.getManagerAccounts = async (req, res) => {
         if (!agency) return res.status(404).json({ error: 'Agency not found' });
         if (!agency.googleRefreshToken) return res.status(400).json({ error: 'Google Ads not connected for this agency' });
 
-        const accounts = await googleAdsIntegration.listManagerAccounts(agency.googleRefreshToken);
+        const accounts = await googleAdsIntegration.listManagerAccounts(agency.googleRefreshToken, getCustomCreds(agency));
         res.json({ success: true, accounts });
     } catch (err) {
         logger.error('[GoogleAdsCtrl] getManagerAccounts error:', err.message);
@@ -37,7 +46,7 @@ exports.getClientAccounts = async (req, res) => {
         if (!agency) return res.status(404).json({ error: 'Agency not found' });
         if (!agency.googleRefreshToken) return res.status(400).json({ error: 'Google Ads not connected' });
 
-        const accounts = await googleAdsIntegration.listClientAccounts(mccId, agency.googleRefreshToken);
+        const accounts = await googleAdsIntegration.listClientAccounts(mccId, agency.googleRefreshToken, getCustomCreds(agency));
         res.json({ success: true, accounts });
     } catch (err) {
         logger.error('[GoogleAdsCtrl] getClientAccounts error:', err.message);
@@ -58,7 +67,7 @@ exports.getConversionActions = async (req, res) => {
         if (!agency) return res.status(404).json({ error: 'Agency not found' });
         if (!agency.googleRefreshToken) return res.status(400).json({ error: 'Google Ads not connected' });
 
-        const actions = await googleAdsIntegration.listConversionActions(customerId, mccId, agency.googleRefreshToken);
+        const actions = await googleAdsIntegration.listConversionActions(customerId, mccId, agency.googleRefreshToken, getCustomCreds(agency));
         res.json({ success: true, actions });
     } catch (err) {
         logger.error('[GoogleAdsCtrl] getConversionActions error:', err.message);
@@ -94,6 +103,35 @@ exports.saveMapping = async (req, res) => {
         res.json({ success: true, agency });
     } catch (err) {
         logger.error('[GoogleAdsCtrl] saveMapping error:', err.message);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /google-ads/save-credentials
+// Body: { locationId, clientId, clientSecret, developerToken }
+// Saves BYOC credentials to the agency
+// ─────────────────────────────────────────────────────────────────────────────
+exports.saveCredentials = async (req, res) => {
+    try {
+        const { locationId, clientId, clientSecret, developerToken } = req.body;
+        if (!locationId) return res.status(400).json({ error: 'locationId is required' });
+
+        const agency = await Agency.findOneAndUpdate(
+            { locationId },
+            {
+                customGoogleAdsClientId:       clientId || null,
+                customGoogleAdsClientSecret:   clientSecret || null,
+                customGoogleAdsDeveloperToken: developerToken || null
+            },
+            { new: true }
+        );
+
+        if (!agency) return res.status(404).json({ error: 'Agency not found' });
+
+        res.json({ success: true, agency });
+    } catch (err) {
+        logger.error('[GoogleAdsCtrl] saveCredentials error:', err.message);
         res.status(500).json({ error: err.message });
     }
 };

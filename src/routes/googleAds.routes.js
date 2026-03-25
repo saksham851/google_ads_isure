@@ -17,4 +17,7 @@ router.get('/conversion-actions', ctrl.getConversionActions);
 // Save the MCC + client account + conversion mapping selection
 router.post('/save-mapping',      ctrl.saveMapping);
 
+// Save custom (BYOC) Google Ads credentials
+router.post('/save-credentials',  ctrl.saveCredentials);
+
 module.exports = router;

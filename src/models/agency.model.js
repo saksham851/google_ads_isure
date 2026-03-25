@@ -24,6 +24,11 @@ const agencySchema = new mongoose.Schema({
     googleRefreshToken: { type: String },
     googleTokenExpiry:  { type: Date },
 
+    // BYOC (Bring Your Own Credentials) for Google Ads
+    customGoogleAdsClientId:       { type: String },
+    customGoogleAdsClientSecret:   { type: String },
+    customGoogleAdsDeveloperToken: { type: String },
+
     // ── Google Ads Account Selection ────────────────────────────────
     // The MCC (Manager) account the user selected
     googleMccId:          { type: String }, // e.g. "1234567890"
