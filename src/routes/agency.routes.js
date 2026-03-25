@@ -9,5 +9,7 @@ router.get('/',                         ctrl.index);
 router.get('/create',                   ctrl.createView);
 router.post('/',                        ctrl.store);
 router.get('/:locationId/detail',       ctrl.detail);
+router.post('/:locationId/disconnect-ghl', ctrl.disconnectGHL);
+router.delete('/:locationId',           ctrl.deleteAgency);
 
 module.exports = router;
