@@ -56,12 +56,12 @@ class GoogleAdsIntegration {
                     }
                 } catch (e) {
                     // Include it anyway with a fallback name!
-                    const errorDetails = e.errors ? JSON.stringify(e.errors) : JSON.stringify(e);
-                    logger.warn(`[GoogleAds] Could not query account ${id}: ${errorDetails}`);
+                    const errorMsg = e.errors ? (Array.isArray(e.errors) ? e.errors[0]?.message : JSON.stringify(e.errors)) : (e.message || "Unknown API Error");
+                    logger.warn(`[GoogleAds] Could not query account ${id}: ${errorMsg}`);
                     results.push({
                         id:           String(id),
-                        name:         `Account: ${id} (Setup Incomplete)`,
-                        isManager:    true, // Assume manager as fallback so it shows in MCC list
+                        name:         `Account: ${id} (${errorMsg.substring(0, 20)}...)`,
+                        isManager:    true,
                         currencyCode: 'USD',
                         timeZone:     'America/New_York'
                     });
@@ -108,8 +108,9 @@ class GoogleAdsIntegration {
                 currencyCode: r.customer_client.currency_code
             }));
         } catch (err) {
-            logger.error(`[GoogleAds] listClientAccounts(${mccClean}) failed: ${err.message}`);
-            throw err;
+            const errorMsg = err.errors ? (Array.isArray(err.errors) ? err.errors[0]?.message : JSON.stringify(err.errors)) : (err.message || "Unknown API Error");
+            logger.error(`[GoogleAds] listClientAccounts(${mccClean}) failed: ${errorMsg}`);
+            throw new Error(errorMsg);
         }
     }
 
