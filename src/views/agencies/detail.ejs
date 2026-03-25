@@ -312,6 +312,22 @@
                                 <form id="mapping-form">
                                     <input type="hidden" id="locationId" value="<%= agency.locationId %>">
 
+                                    <!-- Developer Token (Moved from Step 2) -->
+                                    <div class="mb-3">
+                                        <label class="form-label fw-medium" style="font-size:13px;">Developer Token</label>
+                                        <div class="d-flex gap-2">
+                                            <input type="text" class="form-control form-control-sm" id="custom-developer-token" 
+                                                   placeholder="Enter your Google Ads Developer Token"
+                                                   value="<%= agency.customGoogleAdsDeveloperToken || '' %>" style="font-size:13px; max-width: 420px;">
+                                            <button type="button" class="btn btn-primary btn-sm" onclick="saveCustomCreds()" title="Save Token">
+                                                <i class="ti ti-device-floppy"></i>
+                                            </button>
+                                        </div>
+                                        <div class="form-text mt-1" style="font-size:11px;">
+                                            It's required to fetch Manager/MCC accounts.
+                                        </div>
+                                    </div>
+
                                     <!-- Manager Account -->
                                     <div class="mb-3">
                                         <label class="form-label fw-medium" style="font-size:13px;">Manager Account
@@ -591,9 +607,13 @@
                     sel.value = '<%= agency.googleMccId %>';
                     if (sel.value) loadClientAccounts();
         <% } %>
-    } catch (e) {
+            } catch (e) {
                 console.error('Manager fetch error:', e);
-                sel.innerHTML = `<option value="">Error: ${e.message || 'Check terminal logs for details'}</option>`;
+                let msg = e.message || 'Check terminal logs for details';
+                if (msg.includes('invalid_grant') || msg.includes('auth')) {
+                    msg = 'Authentication Expired. Please click "Reconnect Account" above.';
+                }
+                sel.innerHTML = `<option value="">Error: ${msg}</option>`;
             }
         }
 
@@ -706,11 +726,17 @@
 
         async function saveCustomCreds(isClear = false) {
             const statusDiv = document.getElementById('creds-status');
-            const clientId = isClear ? '' : document.getElementById('custom-client-id').value.trim();
-            const secret = isClear ? '' : document.getElementById('custom-client-secret').value.trim();
+            const clientId = isClear ? '' : (document.getElementById('custom-client-id')?.value || '').trim();
+            const secret = isClear ? '' : (document.getElementById('custom-client-secret')?.value || '').trim();
+            const devToken = isClear ? '' : document.getElementById('custom-developer-token').value.trim();
 
-            if (!isClear && (!clientId || !secret)) {
-                statusDiv.innerHTML = '<span class="text-danger">ID and Secret are required.</span>';
+            // Client ID/Secret might be hidden if already connected, so we use fallback values from <%= (agency.customGoogleAdsClientId || '').substring(0, 5) %>
+            const finalClientId = clientId || '<%= agency.customGoogleAdsClientId || "" %>';
+            const finalSecret = secret || '<%= agency.customGoogleAdsClientSecret || "" %>';
+
+            if (!isClear && !devToken) {
+                statusDiv.innerHTML = '<span class="text-danger">Developer Token is required.</span>';
+                if (devToken === "") document.getElementById('custom-developer-token').focus();
                 return;
             }
 
@@ -722,16 +748,16 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         locationId,
-                        clientId: clientId || null,
-                        clientSecret: secret || null,
-                        developerToken: null
+                        clientId: finalClientId || null,
+                        clientSecret: finalSecret || null,
+                        developerToken: devToken || null
                     })
                 });
                 const data = await r.json();
                 if (!data.success) throw new Error(data.error);
 
-                statusDiv.innerHTML = `<span class="text-success"><i class="ti ti-check me-1"></i>${isClear ? 'Cleared!' : 'Saved!'} Loading...</span>`;
-                setTimeout(() => location.reload(), 1000);
+                statusDiv.innerHTML = `<span class="text-success"><i class="ti ti-check me-1"></i>${isClear ? 'Cleared!' : 'Token Saved!'}</span>`;
+                setTimeout(() => location.reload(), 1500);
             } catch (e) {
                 statusDiv.innerHTML = `<span class="text-danger"><i class="ti ti-x me-1"></i>${e.message}</span>`;
             }
