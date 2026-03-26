@@ -9,10 +9,23 @@ const agencyController = {
     // ─────────────────────────────────────────────────────────────────
     index: async (req, res) => {
         try {
-            const agencies = await Agency.find().sort({ createdAt: -1 });
+            const page = parseInt(req.query.page) || 1;
+            const limit = 10;
+            const skip = (page - 1) * limit;
+
+            const [agencies, totalAgencies] = await Promise.all([
+                Agency.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
+                Agency.countDocuments()
+            ]);
+
+            const totalPages = Math.ceil(totalAgencies / limit);
+
             res.render('agencies/index', {
                 title: 'Sub-Accounts / Agencies',
                 agencies,
+                currentPage: page,
+                totalPages,
+                totalAgencies,
                 activePage: 'agencies',
                 layout: 'layouts/dashboard_layout'
             });
@@ -41,7 +54,12 @@ const agencyController = {
                 .limit(10);
 
             const webhookLogs = await WebhookLog
-                .find({ 'payload.location_id': agency.locationId })
+                .find({
+                    $or: [
+                        { 'payload.location_id': agency.locationId },
+                        { 'payload.contact.locationId': agency.locationId }
+                    ]
+                })
                 .sort({ createdAt: -1 })
                 .limit(5);
 

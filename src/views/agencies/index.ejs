@@ -95,7 +95,11 @@
                                 </td>
                                 <td class="py-3">
                                     <% if (agency.googleAdsCustomerId) { %>
-                                        <code style="font-size:12px;background:#f1f3f4;padding:2px 6px;border-radius:4px;"><%= agency.googleAdsCustomerId %></code>
+                                        <% 
+                                            const custId = agency.googleAdsCustomerId;
+                                            const maskedId = custId.length > 6 ? custId.substring(0, 3) + '***' + custId.substring(custId.length - 4) : custId;
+                                        %>
+                                        <code style="font-size:12px;background:#f1f3f4;padding:2px 6px;border-radius:4px;"><%= maskedId %></code>
                                     <% } else { %>
                                         <span class="text-muted" style="font-size:12px;">Not set</span>
                                     <% } %>
@@ -143,6 +147,39 @@
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Pagination -->
+                <% if (totalPages > 1) { %>
+                <div class="card-footer bg-white border-top py-3 px-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="text-muted small">
+                            Showing <%= agencies.length %> of <%= totalAgencies %> entries
+                        </div>
+                        <nav>
+                            <ul class="pagination pagination-sm mb-0 gap-1">
+                                <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+                                    <a class="page-link border-0 rounded-circle" href="/agencies?page=<%= currentPage - 1 %>">
+                                        <i class="ti ti-chevron-left"></i>
+                                    </a>
+                                </li>
+                                
+                                <% for(let i = 1; i <= totalPages; i++) { %>
+                                    <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                                        <a class="page-link border-0 rounded-circle <%= currentPage === i ? 'bg-primary text-white' : 'text-dark' %>" 
+                                           href="/agencies?page=<%= i %>"><%= i %></a>
+                                    </li>
+                                <% } %>
+
+                                <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+                                    <a class="page-link border-0 rounded-circle" href="/agencies?page=<%= currentPage + 1 %>">
+                                        <i class="ti ti-chevron-right"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+                <% } %>
             </div>
         </div>
     </div>

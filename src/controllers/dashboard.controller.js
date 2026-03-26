@@ -5,19 +5,29 @@ const WebhookLog     = require('../models/webhookLog.model');
 const dashboardController = {
     index: async (req, res) => {
         try {
-            const [agencyCount, conversionCount, webhookCount, failedCount, recentLogs] = await Promise.all([
+            const page = parseInt(req.query.page) || 1;
+            const limit = 5;
+            const skip = (page - 1) * limit;
+
+            const [agencyCount, conversionCount, webhookCount, failedCount, recentLogs, totalRecentLogs] = await Promise.all([
                 Agency.countDocuments(),
                 ConversionLog.countDocuments({ status: 'success' }),
                 WebhookLog.countDocuments(),
                 ConversionLog.countDocuments({ status: 'failed' }),
-                ConversionLog.find().populate('leadId').sort({ createdAt: -1 }).limit(10)
+                ConversionLog.find().populate('leadId').sort({ createdAt: -1 }).skip(skip).limit(limit),
+                ConversionLog.countDocuments()
             ]);
+
+            const totalPages = Math.ceil(totalRecentLogs / limit);
 
             return res.render('dashboard', {
                 title:      'Dashboard',
                 activePage: 'dashboard',
                 stats: { agencyCount, conversionCount, webhookCount, failedCount },
                 recentLogs,
+                currentPage: page,
+                totalPages,
+                totalRecentLogs,
                 layout:     'layouts/dashboard_layout'
             });
         } catch (error) {
@@ -27,6 +37,9 @@ const dashboardController = {
                 activePage: 'dashboard',
                 stats: { agencyCount: 0, conversionCount: 0, webhookCount: 0, failedCount: 0 },
                 recentLogs: [],
+                currentPage: 1,
+                totalPages: 0,
+                totalRecentLogs: 0,
                 layout:     'layouts/dashboard_layout'
             });
         }
