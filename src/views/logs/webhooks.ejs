@@ -1,0 +1,125 @@
+<div class="row">
+    <div class="col-12">
+        <div class="card table-card mt-3">
+            <div class="card-header border-bottom py-3">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <div>
+                        <h5 class="mb-0 fw-bold">Webhook Logs</h5>
+                        <p class="text-muted mb-0" style="font-size: 13px;">Recent webhooks received from GoHighLevel.</p>
+                    </div>
+                    
+                    <form action="/webhooks-logs" method="GET" class="d-flex align-items-center gap-2 flex-wrap">
+                        <!-- Agency Filter -->
+                        <select name="locationId" class="form-select form-select-sm" style="width: 200px; border-radius: 8px;">
+                            <option value="">— All Sub-accounts —</option>
+                            <% agencies.forEach(ag => { %>
+                                <option value="<%= ag.locationId %>" <%= locationId === ag.locationId ? 'selected' : '' %>><%= ag.agencyName %></option>
+                            <% }) %>
+                        </select>
+
+                        <!-- Days Filter -->
+                        <select name="days" class="form-select form-select-sm" style="width: 140px; border-radius: 8px;">
+                            <option value="all" <%= days === 'all' ? 'selected' : '' %>>All Time</option>
+                            <option value="7" <%= days === '7' ? 'selected' : '' %>>Last 7 Days</option>
+                            <option value="30" <%= days === '30' ? 'selected' : '' %>>Last 30 Days</option>
+                            <option value="90" <%= days === '90' ? 'selected' : '' %>>Last 90 Days</option>
+                        </select>
+
+                        <button type="submit" class="btn btn-sm btn-primary px-3" style="border-radius: 8px;">
+                            <i class="ti ti-filter me-1"></i> Apply
+                        </button>
+                        
+                        <% if (locationId || (days && days !== 'all')) { %>
+                            <a href="/webhooks-logs" class="btn btn-sm btn-light border px-2" title="Reset Filters" style="border-radius: 8px;">
+                                <i class="ti ti-rotate-clockwise"></i>
+                            </a>
+                        <% } %>
+                    </form>
+                </div>
+            </div>
+            <div class="card-body pt-3">
+                <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                    <table class="table mb-0">
+                        <thead style="position: sticky; top: 0; background: #fff; z-index: 1;">
+                            <tr>
+                                <th>Source</th>
+                                <th>Sub-Account (Location)</th>
+                                <th>Contact ID</th>
+                                <th>Status</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% logs.forEach(log => { %>
+                            <tr>
+                                <td><span class="badge bg-light-primary text-primary"><%= log.source || 'GHL' %></span></td>
+                                <td>
+                                    <span class="fw-bold text-dark"><%= log.agencyName %></span><br>
+                                    <small class="text-muted" style="font-size: 10px;">ID: <%= (log.payload?.location_id || log.payload?.contact?.locationId || 'unknown').substring(0,8) %>...</small>
+                                </td>
+                                <td><code><%= log.payload?.contact_id || 'unknown' %></code></td>
+                                <td>
+                                    <% 
+                                        var statusColor = log.status === 'success' ? '#1e8e3e' : (log.status === 'error' ? '#c5221f' : '#b06000');
+                                        var statusBg    = log.status === 'success' ? '#e6f4ea'  : (log.status === 'error' ? '#fce8e6'  : '#fef9e7');
+                                    %>
+                                    <span style="background:<%= statusBg %>;color:<%= statusColor %>;border-radius:12px;padding:3px 10px;font-size:12px;font-weight:600;">
+                                        <%= (log.status || 'unknown').toUpperCase() %>
+                                    </span>
+                                    <% if (log.status === 'error' && log.errorMessage) { %>
+                                        <div style="font-size: 11px; color: #c5221f; margin-top: 4px;"><%= log.errorMessage %></div>
+                                    <% } %>
+                                </td>
+                                <td style="font-size: 13px; color: #70757a;"><%= new Date(log.createdAt).toLocaleString() %></td>
+                            </tr>
+                            <% }) %>
+                            <% if (logs.length === 0) { %>
+                                <tr>
+                                    <td colspan="5" class="text-center py-5 text-muted">No webhook logs found.</td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <% if (totalPages > 1) { %>
+                <div class="card-footer bg-white border-top py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="text-muted small">
+                            Showing <%= logs.length %> of <%= totalLogs %> entries
+                        </div>
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination pagination-sm mb-0">
+                                <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+                                    <a class="page-link" href="/webhooks-logs?page=<%= currentPage - 1 %>&locationId=<%= locationId %>&days=<%= days %>">
+                                        <i class="ti ti-chevron-left"></i>
+                                    </a>
+                                </li>
+                                
+                                <% 
+                                    let startPage = Math.max(1, currentPage - 2);
+                                    let endPage = Math.min(totalPages, startPage + 4);
+                                    if (endPage - startPage < 4) startPage = Math.max(1, endPage - 4);
+                                %>
+
+                                <% for(let i = startPage; i <= endPage; i++) { %>
+                                    <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                                        <a class="page-link" href="/webhooks-logs?page=<%= i %>&locationId=<%= locationId %>&days=<%= days %>"><%= i %></a>
+                                    </li>
+                                <% } %>
+
+                                <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+                                    <a class="page-link" href="/webhooks-logs?page=<%= currentPage + 1 %>&locationId=<%= locationId %>&days=<%= days %>">
+                                        <i class="ti ti-chevron-right"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
