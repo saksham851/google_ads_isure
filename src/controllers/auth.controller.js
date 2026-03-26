@@ -9,7 +9,7 @@ const logger = require('../utils/logger');
  * The user selects which sub-account (location) to install the app in.
  */
 exports.install = (req, res) => {
-    const scopes     = 'locations.readonly contacts.readonly contacts.write companies.readonly';
+    const scopes     = 'locations.readonly contacts.readonly contacts.write';
     const redirectUri = process.env.GHL_REDIRECT_URI || 'http://localhost:3000/auth/callback';
     const clientId   = process.env.GHL_CLIENT_ID;
 
