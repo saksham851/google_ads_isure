@@ -44,7 +44,7 @@
                                 <th class="py-3" style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#5f6368;">GHL Status</th>
                                 <th class="py-3" style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#5f6368;">Google Ads</th>
                                 <th class="py-3" style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#5f6368;">Customer ID</th>
-                                <th class="py-3" style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#5f6368;">Webhook URL</th>
+
                                 <th class="py-3 text-center" style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#5f6368;">Actions</th>
                             </tr>
                         </thead>
@@ -104,21 +104,7 @@
                                         <span class="text-muted" style="font-size:12px;">Not set</span>
                                     <% } %>
                                 </td>
-                                <td class="py-3">
-                                    <% if (agency.locationId) { %>
-                                    <% const uniqueWebhookUrl = baseUrl + '/webhooks/ghl/' + agency.locationId; %>
-                                    <div class="d-flex align-items-center gap-1">
-                                        <code style="font-size:11px;background:#f1f3f4;padding:2px 6px;border-radius:4px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="<%= uniqueWebhookUrl %>">
-                                            <%= uniqueWebhookUrl %>
-                                        </code>
-                                        <button class="btn btn-sm p-1" onclick="copyWebhook('<%= uniqueWebhookUrl %>')" title="Copy">
-                                            <i class="ti ti-copy" style="font-size:14px;color:#5f6368;"></i>
-                                        </button>
-                                    </div>
-                                    <% } else { %>
-                                    <span class="text-muted" style="font-size:12px;">—</span>
-                                    <% } %>
-                                </td>
+
                                 <td class="py-3 text-center">
                                     <div class="d-flex justify-content-center gap-1">
                                         <% if (agency.locationId) { %>
@@ -135,7 +121,7 @@
 
                             <% if (agencies.length === 0) { %>
                             <tr>
-                                <td colspan="7" class="text-center py-5">
+                                <td colspan="6" class="text-center py-5">
                                     <div style="color:#9aa0a6;">
                                         <i class="ti ti-building-store" style="font-size:48px;display:block;margin-bottom:12px;"></i>
                                         <p class="fw-semibold mb-1" style="color:#5f6368;">No sub-accounts yet</p>
