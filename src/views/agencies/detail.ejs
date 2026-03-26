@@ -726,18 +726,29 @@
 
         async function saveCustomCreds(isClear = false) {
             const statusDiv = document.getElementById('creds-status');
-            const clientId = isClear ? '' : (document.getElementById('custom-client-id')?.value || '').trim();
-            const secret = isClear ? '' : (document.getElementById('custom-client-secret')?.value || '').trim();
-            const devToken = isClear ? '' : document.getElementById('custom-developer-token').value.trim();
+            
+            let payload = {
+                locationId,
+                clientId: null,
+                clientSecret: null,
+                developerToken: null
+            };
 
-            // Client ID/Secret might be hidden if already connected, so we use fallback values from <%= (agency.customGoogleAdsClientId || '').substring(0, 5) %>
-            const finalClientId = clientId || '<%= agency.customGoogleAdsClientId || "" %>';
-            const finalSecret = secret || '<%= agency.customGoogleAdsClientSecret || "" %>';
+            if (!isClear) {
+                const clientId = (document.getElementById('custom-client-id')?.value || '').trim();
+                const secret = (document.getElementById('custom-client-secret')?.value || '').trim();
+                const devTokenElement = document.getElementById('custom-developer-token');
+                const devToken = (devTokenElement?.value || '').trim();
 
-            if (!isClear && !devToken) {
-                statusDiv.innerHTML = '<span class="text-danger">Developer Token is required.</span>';
-                if (devToken === "") document.getElementById('custom-developer-token').focus();
-                return;
+                // Use inputs OR fallbacks from server-rendered values if inputs are missing/hidden
+                payload.clientId = clientId || '<%= agency.customGoogleAdsClientId || "" %>';
+                payload.clientSecret = secret || '<%= agency.customGoogleAdsClientSecret || "" %>';
+                payload.developerToken = devToken || '<%= agency.customGoogleAdsDeveloperToken || "" %>';
+
+                if (!payload.clientId) {
+                    statusDiv.innerHTML = '<span class="text-danger">Client ID is required.</span>';
+                    return;
+                }
             }
 
             statusDiv.innerHTML = `<i class="ti ti-loader-2 me-1"></i> ${isClear ? 'Clearing...' : 'Saving...'}`;
@@ -746,17 +757,12 @@
                 const r = await fetch('/google-ads/save-credentials', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        locationId,
-                        clientId: finalClientId || null,
-                        clientSecret: finalSecret || null,
-                        developerToken: devToken || null
-                    })
+                    body: JSON.stringify(payload)
                 });
                 const data = await r.json();
                 if (!data.success) throw new Error(data.error);
 
-                statusDiv.innerHTML = `<span class="text-success"><i class="ti ti-check me-1"></i>${isClear ? 'Cleared!' : 'Token Saved!'}</span>`;
+                statusDiv.innerHTML = `<span class="text-success"><i class="ti ti-check me-1"></i>${isClear ? 'Cleared!' : 'Saved!'}</span>`;
                 setTimeout(() => location.reload(), 1500);
             } catch (e) {
                 statusDiv.innerHTML = `<span class="text-danger"><i class="ti ti-x me-1"></i>${e.message}</span>`;
