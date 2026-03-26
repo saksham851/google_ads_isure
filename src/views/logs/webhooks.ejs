@@ -17,16 +17,7 @@
                             <% }) %>
                         </select>
 
-                        <!-- Event Type Filter -->
-                        <select name="eventType" class="form-select form-select-sm" style="width: 160px; border-radius: 8px;">
-                            <option value="">— All Event Types —</option>
-                            <option value="general"       <%= (typeof eventType !== 'undefined' && eventType === 'general')        ? 'selected' : '' %>>General</option>
-                            <option value="lead-created"  <%= (typeof eventType !== 'undefined' && eventType === 'lead-created')   ? 'selected' : '' %>>Lead Created</option>
-                            <option value="stage-changed" <%= (typeof eventType !== 'undefined' && eventType === 'stage-changed')  ? 'selected' : '' %>>Stage Changed</option>
-                            <option value="appointment"   <%= (typeof eventType !== 'undefined' && eventType === 'appointment')    ? 'selected' : '' %>>Appointment</option>
-                            <option value="form-submit"   <%= (typeof eventType !== 'undefined' && eventType === 'form-submit')    ? 'selected' : '' %>>Form Submit</option>
-                            <option value="purchase"      <%= (typeof eventType !== 'undefined' && eventType === 'purchase')       ? 'selected' : '' %>>Purchase</option>
-                        </select>
+
 
                         <!-- Days Filter -->
                         <select name="days" class="form-select form-select-sm" style="width: 130px; border-radius: 8px;">
@@ -40,7 +31,7 @@
                             <i class="ti ti-filter me-1"></i> Apply
                         </button>
                         
-                        <% if (locationId || eventType || (days && days !== 'all')) { %>
+                        <% if (locationId || (days && days !== 'all')) { %>
                             <a href="/webhooks-logs" class="btn btn-sm btn-light border px-2" title="Reset Filters" style="border-radius: 8px;">
                                 <i class="ti ti-rotate-clockwise"></i>
                             </a>
@@ -55,7 +46,7 @@
                             <tr>
                                 <th>Source</th>
                                 <th>Sub-Account (Location)</th>
-                                <th>Event Type</th>
+
                                 <th>Contact ID</th>
                                 <th>Status</th>
                                 <th>Time</th>
@@ -69,16 +60,7 @@
                                     <span class="fw-bold text-dark"><%= log.agencyName %></span><br>
                                     <small class="text-muted" style="font-size: 10px;">ID: <%= (log.payload?.location_id || log.payload?.contact?.locationId || log.locationId || 'unknown').substring(0,8) %>...</small>
                                 </td>
-                                <td>
-                                    <% 
-                                        const et = log.eventType || 'general';
-                                        const etColors = { 'lead-created': '#1a73e8', 'stage-changed': '#1e8e3e', 'appointment': '#b06000', 'form-submit': '#7b1fa2', 'purchase': '#c5221f', 'general': '#5f6368' };
-                                        const etBgs    = { 'lead-created': '#e8f0fe', 'stage-changed': '#e6f4ea',  'appointment': '#fef9e7', 'form-submit': '#f3e8fd', 'purchase': '#fce8e6', 'general': '#f1f3f4' };
-                                    %>
-                                    <span style="background:<%= etBgs[et] || '#f1f3f4' %>;color:<%= etColors[et] || '#5f6368' %>;border-radius:10px;padding:2px 9px;font-size:11px;font-weight:600;white-space:nowrap;">
-                                        <i class="ti ti-bolt" style="font-size:10px;"></i> <%= et %>
-                                    </span>
-                                </td>
+
                                 <td><code><%= log.payload?.contact_id || 'unknown' %></code></td>
                                 <td>
                                     <% 
