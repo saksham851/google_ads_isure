@@ -3,10 +3,10 @@ const { encrypt, decrypt } = require('../utils/crypto.util');
 
 const conversionMappingSchema = new mongoose.Schema({
     pipelineStageKeyword: { type: String }, // e.g. "purchased", "closed won"
-    conversionActionId:   { type: String }, // Google Ads Conversion Action ID
+    conversionActionId:   { type: String, set: encrypt, get: decrypt }, // Google Ads Conversion Action ID
     conversionActionName: { type: String }, // Human-readable name for display
     conversionValue:      { type: Number, default: 0 }
-}, { _id: false });
+}, { _id: false, toObject: { getters: true }, toJSON: { getters: true } });
 
 const agencySchema = new mongoose.Schema({
     agencyId:   { type: String, required: true }, // GHL Company/Agency ID
@@ -34,11 +34,11 @@ const agencySchema = new mongoose.Schema({
 
     // ── Google Ads Account Selection ────────────────────────────────
     // The MCC (Manager) account the user selected
-    googleMccId:          { type: String }, // e.g. "1234567890"
+    googleMccId:          { type: String, set: encrypt, get: decrypt }, // e.g. "1234567890"
     googleMccName:        { type: String },
 
     // The client (sub) account under the MCC
-    googleAdsCustomerId:  { type: String }, // e.g. "9876543210"
+    googleAdsCustomerId:  { type: String, set: encrypt, get: decrypt }, // e.g. "9876543210"
     googleAdsAccountName: { type: String },
 
     // ── Conversion Action Mappings ──────────────────────────────────
