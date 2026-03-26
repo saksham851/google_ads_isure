@@ -56,6 +56,16 @@ class GHLIntegration {
         });
         return response.data;
     }
+
+    async getCompanyData(companyId, token) {
+        const response = await axios.get(`${this.apiBaseUrl}/companies/${companyId}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Version': '2021-07-28'
+            }
+        });
+        return response.data;
+    }
 }
 
 module.exports = new GHLIntegration();

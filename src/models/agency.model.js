@@ -10,7 +10,9 @@ const conversionMappingSchema = new mongoose.Schema({
 const agencySchema = new mongoose.Schema({
     agencyId:   { type: String, required: true }, // GHL Company/Agency ID
     locationId: { type: String, required: true, unique: true },   // GHL Location ID (sub-account)
-    agencyName: { type: String },
+    companyName: { type: String }, // Parent Agency Name
+    subAccountName: { type: String }, // Individual Sub-account Name
+    agencyName: { type: String }, // Deprecated field, maintain for compatibility if needed
     email:      { type: String },
     phone:      { type: String },
 
