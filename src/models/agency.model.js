@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { encrypt, decrypt } = require('../utils/crypto.util');
 
 const conversionMappingSchema = new mongoose.Schema({
     pipelineStageKeyword: { type: String }, // e.g. "purchased", "closed won"
@@ -17,19 +18,19 @@ const agencySchema = new mongoose.Schema({
     phone:      { type: String },
 
     // ── GHL OAuth Tokens ────────────────────────────────────────────
-    ghlAccessToken:  { type: String },
-    ghlRefreshToken: { type: String },
+    ghlAccessToken:  { type: String, set: encrypt, get: decrypt },
+    ghlRefreshToken: { type: String, set: encrypt, get: decrypt },
     ghlTokenExpiry:  { type: Date },
 
     // ── Google Ads OAuth Tokens ─────────────────────────────────────
-    googleAccessToken:  { type: String },
-    googleRefreshToken: { type: String },
+    googleAccessToken:  { type: String, set: encrypt, get: decrypt },
+    googleRefreshToken: { type: String, set: encrypt, get: decrypt },
     googleTokenExpiry:  { type: Date },
 
     // BYOC (Bring Your Own Credentials) for Google Ads
-    customGoogleAdsClientId:       { type: String },
-    customGoogleAdsClientSecret:   { type: String },
-    customGoogleAdsDeveloperToken: { type: String },
+    customGoogleAdsClientId:       { type: String, set: encrypt, get: decrypt },
+    customGoogleAdsClientSecret:   { type: String, set: encrypt, get: decrypt },
+    customGoogleAdsDeveloperToken: { type: String, set: encrypt, get: decrypt },
 
     // ── Google Ads Account Selection ────────────────────────────────
     // The MCC (Manager) account the user selected
@@ -46,6 +47,10 @@ const agencySchema = new mongoose.Schema({
 
     activeCampaigns: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Campaign' }],
     isActive: { type: Boolean, default: true }
-}, { timestamps: true });
+}, { 
+    timestamps: true,
+    toObject: { getters: true },
+    toJSON: { getters: true }
+});
 
 module.exports = mongoose.model('Agency', agencySchema);

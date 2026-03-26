@@ -226,13 +226,13 @@
                                         <label class="form-label mb-1 fw-semibold" style="font-size:12px;">Client ID</label>
                                         <input type="text" class="form-control form-control-sm" id="custom-client-id" 
                                                placeholder="Enter your Google Client ID"
-                                               value="<%= agency.customGoogleAdsClientId || '' %>" style="font-size:13px;">
+                                               value="<%= (agency.customGoogleAdsClientId || '').substring(0, 10) %>***" style="font-size:13px;">
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label mb-1 fw-semibold" style="font-size:12px;">Client Secret</label>
                                         <input type="password" class="form-control form-control-sm" id="custom-client-secret" 
                                                placeholder="Enter your Google Client Secret"
-                                               value="<%= agency.customGoogleAdsClientSecret || '' %>" style="font-size:13px;">
+                                               value="<%= agency.customGoogleAdsClientSecret ? '********' : '' %>" style="font-size:13px;">
                                     </div>
                                     <div class="d-flex align-items-center justify-content-between">
                                         <div class="d-flex align-items-center gap-3">
@@ -260,7 +260,7 @@
                                     <div>
                                         <div class="fw-bold text-dark" style="font-size:14px;">Google App Configured & Verified</div>
                                         <div class="text-muted d-flex align-items-center gap-1 mt-1" style="font-size:11.5px;">
-                                            <span class="fw-medium">Client ID:</span> <code class="bg-white border px-1 rounded" style="color:#5f6368;"><%= (agency.customGoogleAdsClientId || '').substring(0, 15) %>...</code>
+                                            <span class="fw-medium">Client ID:</span> <code class="bg-white border px-1 rounded" style="color:#5f6368;"><%= (agency.customGoogleAdsClientId || '').substring(0, 10) %>***</code>
                                             <span class="badge bg-success-subtle text-success border-success px-2 ms-1" style="font-size:9px; letter-spacing: 0.5px;">ACTIVE</span>
                                         </div>
                                     </div>
@@ -312,9 +312,9 @@
                                     <div class="mb-3">
                                         <label class="form-label fw-medium" style="font-size:13px;">Developer Token</label>
                                         <div class="d-flex gap-2">
-                                            <input type="text" class="form-control form-control-sm" id="custom-developer-token" 
+                                            <input type="password" class="form-control form-control-sm" id="custom-developer-token" 
                                                    placeholder="Enter your Google Ads Developer Token"
-                                                   value="<%= agency.customGoogleAdsDeveloperToken || '' %>" style="font-size:13px; max-width: 420px;">
+                                                   value="<%= agency.customGoogleAdsDeveloperToken ? '********' : '' %>" style="font-size:13px; max-width: 420px;">
                                             <button type="button" class="btn btn-primary btn-sm" onclick="saveCustomCreds()" title="Save Token">
                                                 <i class="ti ti-device-floppy"></i>
                                             </button>
