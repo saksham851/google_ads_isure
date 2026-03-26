@@ -133,7 +133,7 @@
                             <i class="ti ti-<%= googleConnected ? 'check' : 'x' %>"></i>
                             Google Ads <%= googleConnected ? 'Connected' : 'Not Connected' %>
                         </span>
-                        <button class="btn btn-sm btn-outline-danger ms-2" onclick="deleteAgency()"
+                        <button class="btn btn-sm btn-outline-danger ms-2" onclick="deleteAgency(this)"
                             title="Delete Sub-account">
                             <i class="ti ti-trash"></i> Delete
                         </button>
@@ -236,11 +236,11 @@
                                     </div>
                                     <div class="d-flex align-items-center justify-content-between">
                                         <div class="d-flex align-items-center gap-3">
-                                            <button type="button" class="btn btn-primary btn-sm px-4" onclick="saveCustomCreds()">
+                                            <button type="button" class="btn btn-primary btn-sm px-4" id="btn-save-creds-1" onclick="saveCustomCreds(false, this)">
                                                 Save App Config
                                             </button>
                                             <% if (agency.customGoogleAdsClientId) { %>
-                                            <button type="button" class="btn btn-link btn-sm text-danger p-0 text-decoration-none" onclick="clearCreds()" style="font-size:12px;">
+                                            <button type="button" class="btn btn-link btn-sm text-danger p-0 text-decoration-none" onclick="clearCreds(this)" style="font-size:12px;">
                                                 <i class="ti ti-trash me-1"></i> Clear saved config
                                             </button>
                                             <% } %>
@@ -322,7 +322,7 @@
                                                value="<%= agency.customGoogleAdsDeveloperToken ? '********' : '' %>" 
                                                style="font-size:13px; padding-left: 12px; height: 38px; border-radius: 8px;">
                                     </div>
-                                    <button type="button" class="btn btn-primary btn-sm px-3 shadow-sm d-flex align-items-center gap-2" onclick="saveCustomCreds()" style="height: 38px; border-radius: 8px;">
+                                    <button type="button" class="btn btn-primary btn-sm px-3 shadow-sm d-flex align-items-center gap-2" id="btn-save-dev-token" onclick="saveCustomCreds(false, this)" style="height: 38px; border-radius: 8px;">
                                         <i class="ti ti-device-floppy"></i> Save
                                     </button>
                                 </div>
@@ -340,7 +340,7 @@
                                     </select>
                                 </div>
                                 <div class="col-md-1 px-0 text-center">
-                                    <button type="button" class="btn btn-light border shadow-sm d-inline-flex align-items-center justify-content-center" onclick="loadManagerAccounts()" style="width:42px; height:42px; border-radius: 8px;">
+                                    <button type="button" id="btn-refresh-mcc" class="btn btn-light border shadow-sm d-inline-flex align-items-center justify-content-center" onclick="loadManagerAccounts(this)" style="width:42px; height:42px; border-radius: 8px;">
                                         <i class="ti ti-refresh fs-5"></i>
                                     </button>
                                 </div>
@@ -406,7 +406,7 @@
                             </div>
 
                             <div class="d-flex align-items-center gap-3 pt-3 border-top mt-4">
-                                <button type="button" class="btn btn-primary px-4 py-2 shadow-sm d-flex align-items-center gap-2 fw-bold" onclick="saveMapping()" style="border-radius: 8px;">
+                                <button type="button" id="btn-save-mapping" class="btn btn-primary px-4 py-2 shadow-sm d-flex align-items-center gap-2 fw-bold" onclick="saveMapping(this)" style="border-radius: 8px;">
                                     <i class="ti ti-circle-check fs-5"></i> Save Configuration
                                 </button>
                                 <div id="save-status" class="small fw-medium"></div>
@@ -570,7 +570,8 @@
     <% } %>
 });
 
-        async function loadManagerAccounts() {
+        async function loadManagerAccounts(btn) {
+            if (btn) btn.disabled = true;
             const sel = document.getElementById('mcc-select');
             sel.innerHTML = '<option value="">Loading...</option>';
             try {
@@ -601,6 +602,8 @@
                     msg = 'Authentication Expired. Please click "Reconnect Account" above.';
                 }
                 sel.innerHTML = `<option value="">Error: ${msg}</option>`;
+            } finally {
+                if (btn) btn.disabled = false;
             }
         }
 
@@ -713,7 +716,8 @@
             btn.closest('.mapping-row').remove();
         }
 
-        async function saveCustomCreds(isClear = false) {
+        async function saveCustomCreds(isClear = false, btn) {
+            if (btn) btn.disabled = true;
             const statusDiv = document.getElementById('creds-status');
             
             let payload = {
@@ -736,6 +740,7 @@
 
                 if (!payload.clientId) {
                     statusDiv.innerHTML = '<span class="text-danger">Client ID is required.</span>';
+                    if (btn) btn.disabled = false;
                     return;
                 }
             }
@@ -755,10 +760,11 @@
                 setTimeout(() => location.reload(), 1500);
             } catch (e) {
                 statusDiv.innerHTML = `<span class="text-danger"><i class="ti ti-x me-1"></i>${e.message}</span>`;
+                if (btn) btn.disabled = false;
             }
         }
 
-        function clearCreds() {
+        function clearCreds(btn) {
             Swal.fire({
                 title: 'Clear Google App config?',
                 text: "This will remove your custom Client ID/Secret and hide the Authenticate button.",
@@ -769,7 +775,7 @@
                 cancelButtonText: 'No, keep it'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    saveCustomCreds(true);
+                    saveCustomCreds(true, btn);
                 }
             });
         }
@@ -781,7 +787,8 @@
             });
         }
 
-        async function saveMapping() {
+        async function saveMapping(btn) {
+            if (btn) btn.disabled = true;
             const mccSel = document.getElementById('mcc-select');
             const custSel = document.getElementById('customer-select');
             const statusDiv = document.getElementById('save-status');
@@ -793,6 +800,7 @@
 
             if (!customerId) {
                 statusDiv.innerHTML = '<span class="text-danger"><i class="ti ti-alert-circle me-1"></i>Please select a Client Account.</span>';
+                if (btn) btn.disabled = false;
                 return;
             }
 
@@ -822,6 +830,8 @@
                 setTimeout(() => statusDiv.innerHTML = '', 3000);
             } catch (e) {
                 statusDiv.innerHTML = `<span class="text-danger"><i class="ti ti-x me-1"></i>${e.message}</span>`;
+            } finally {
+                if (btn) btn.disabled = false;
             }
         }
 
@@ -832,7 +842,7 @@
             });
         }
 
-        function disconnectGHL() {
+        function disconnectGHL(btn) {
             Swal.fire({
                 title: 'Disconnect GHL?',
                 text: "This will remove access tokens for this sub-account.",
@@ -842,6 +852,7 @@
                 confirmButtonColor: '#d33'
             }).then(async (result) => {
                 if (result.isConfirmed) {
+                    if (btn) btn.disabled = true;
                     try {
                         const r = await fetch(`/agencies/${locationId}/disconnect-ghl`, { method: 'POST' });
                         const d = await r.json();
@@ -849,12 +860,13 @@
                         else throw new Error(d.error);
                     } catch (e) {
                         Swal.fire('Error', e.message, 'error');
+                        if (btn) btn.disabled = false;
                     }
                 }
             });
         }
 
-        function deleteAgency() {
+        function deleteAgency(btn) {
             Swal.fire({
                 title: 'Delete EVERYTHING?',
                 text: "This will remove this sub-account and ALL its data permanentely!",
@@ -864,6 +876,7 @@
                 confirmButtonColor: '#d33'
             }).then(async (result) => {
                 if (result.isConfirmed) {
+                    if (btn) btn.disabled = true;
                     try {
                         const r = await fetch(`/agencies/${locationId}`, { method: 'DELETE' });
                         const d = await r.json();
@@ -871,6 +884,7 @@
                         else throw new Error(d.error);
                     } catch (e) {
                         Swal.fire('Error', e.message, 'error');
+                        if (btn) btn.disabled = false;
                     }
                 }
             });
