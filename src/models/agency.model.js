@@ -8,8 +8,8 @@ const conversionMappingSchema = new mongoose.Schema({
 }, { _id: false });
 
 const agencySchema = new mongoose.Schema({
-    agencyId:   { type: String, required: true, unique: true }, // GHL Company/Agency ID
-    locationId: { type: String, unique: true, sparse: true },   // GHL Location ID (sub-account)
+    agencyId:   { type: String, required: true }, // GHL Company/Agency ID
+    locationId: { type: String, required: true, unique: true },   // GHL Location ID (sub-account)
     agencyName: { type: String },
     email:      { type: String },
     phone:      { type: String },

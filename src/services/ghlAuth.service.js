@@ -25,10 +25,10 @@ class GHLAuthService {
             }
 
             // 3. Save or update agency in our Database
-            const agencyId = companyId || locationId; // fallback logic
             const agency = await Agency.findOneAndUpdate(
-                { agencyId: agencyId }, // Use specific agency / company ID wrapper
+                { locationId: locationId }, // Unique per sub-account (location)
                 {
+                    agencyId: companyId || locationId,
                     locationId: locationId || null,
                     ghlAccessToken: access_token,
                     ghlRefreshToken: refresh_token,
