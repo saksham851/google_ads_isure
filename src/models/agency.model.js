@@ -45,6 +45,14 @@ const agencySchema = new mongoose.Schema({
     // Maps pipeline stage keywords → conversion actions
     conversionMappings: [conversionMappingSchema],
 
+    // ── Custom Webhook Endpoints ────────────────────────────────────
+    // Each entry gives the sub-account its own slug: /webhooks/ghl/:locationId/:slug
+    customWebhooks: [{
+        name:      { type: String, required: true }, // e.g. "Lead Form Submission"
+        slug:      { type: String, required: true }, // e.g. "lead-form-submission"
+        createdAt: { type: Date, default: Date.now }
+    }],
+
     activeCampaigns: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Campaign' }],
     isActive: { type: Boolean, default: true }
 }, { 

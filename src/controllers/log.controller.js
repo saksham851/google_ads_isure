@@ -66,7 +66,7 @@ const logController = {
     // GET /webhooks-logs
     webhookLogs: async (req, res) => {
         try {
-            const { locationId, days, page } = req.query;
+            const { locationId, days, page, eventType } = req.query;
             const currentPage = parseInt(page) || 1;
             const limit = 10;
             const skip = (currentPage - 1) * limit;
@@ -86,12 +86,18 @@ const logController = {
                 filter = {
                     ...filter,
                     $or: [
+                        { locationId },
                         { 'payload.location_id': locationId },
                         { 'payload.contact.locationId': locationId }
                     ]
                 };
                 const agency = await Agency.findOne({ locationId });
                 if (agency) selectedAgencyName = agency.agencyName;
+            }
+
+            // Event Type Filter
+            if (eventType) {
+                filter.eventType = eventType;
             }
 
             const [agencies, rawLogs, totalLogs] = await Promise.all([
@@ -108,7 +114,7 @@ const logController = {
             agencies.forEach(a => agencyMap[a.locationId] = a.agencyName);
 
             const logs = rawLogs.map(log => {
-                const locId = log.payload?.location_id || log.payload?.contact?.locationId;
+                const locId = log.locationId || log.payload?.location_id || log.payload?.contact?.locationId;
                 return {
                     ...log.toObject(),
                     agencyName: agencyMap[locId] || 'Unknown'
@@ -124,6 +130,7 @@ const logController = {
                 activePage: 'webhooks',
                 locationId,
                 selectedAgencyName,
+                eventType: eventType || '',
                 days: days || 'all',
                 currentPage,
                 totalPages,

@@ -3,28 +3,32 @@ const WebhookLog = require('../models/webhookLog.model');
 const logger = require('../utils/logger');
 
 exports.ghlWebhook = async (req, res, next) => {
-    const payload = req.body;
-    const headers = req.headers;
+    const payload    = req.body;
+    const headers    = req.headers;
+    const locationId = req.params.locationId || null;
+    const eventType  = req.params.eventType  || 'general';
 
     const webLog = new WebhookLog({
-        source: 'GHL',
-        payload: payload,
-        headers: headers,
+        source:     'GHL',
+        locationId,
+        eventType,
+        payload,
+        headers,
         status: 'pending'
     });
 
     try {
-        // Basic verification - should return 200 immediately to GHL to avoid timeouts
+        // Respond immediately so GHL doesn't time out
         res.status(200).json({ received: true });
 
-        // Process asynchronously (Fire and forget style, but with logging)
-        webhookService.handleGHLWebhook(payload)
-            .then(async (result) => {
+        // Process asynchronously
+        webhookService.handleGHLWebhook(payload, locationId, eventType)
+            .then(async () => {
                 webLog.status = 'success';
                 await webLog.save();
             })
             .catch(async (err) => {
-                logger.error('Webhook processing failed in async handler: ', err);
+                logger.error('Webhook processing failed: ', err);
                 webLog.status = 'error';
                 webLog.errorMessage = err.message;
                 await webLog.save();
@@ -32,9 +36,6 @@ exports.ghlWebhook = async (req, res, next) => {
 
     } catch (error) {
         logger.error('Error in Webhook Controller:', error);
-        // If it crashed before res.json
-        if (!res.headersSent) {
-            next(error);
-        }
+        if (!res.headersSent) next(error);
     }
 };

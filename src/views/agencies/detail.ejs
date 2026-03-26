@@ -417,26 +417,92 @@
             </div>
 
 
-            <!-- Webhook Info -->
-            <div class="card step-card p-4" style="background:#f8f9fa;">
-                <div class="d-flex align-items-start gap-3">
+            <!-- Webhook Management Panel -->
+            <div class="card step-card p-0 overflow-hidden">
+                <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center gap-3">
                     <div class="step-num step-active">
                         <i class="ti ti-webhook" style="font-size:16px;"></i>
                     </div>
-                    <div class="flex-grow-1">
-                        <h6 class="mb-1 fw-semibold" style="color:#202124;">Your Webhook Endpoint</h6>
-                        <p class="text-muted mb-2" style="font-size:13px;">
-                            Set this URL in GHL's Automation &gt; Webhook action. The app identifies the sub-account via
-                            <code>location_id</code> in the payload.
-                        </p>
-                        <div class="d-flex align-items-center gap-2">
-                            <code id="webhook-url"
-                                style="background:#fff;border:1px solid #dadce0;padding:8px 14px;border-radius:6px;font-size:13px;word-break:break-all;">
-                            <%= baseUrl %>/webhooks/ghl
-                        </code>
-                            <button class="btn btn-outline-secondary btn-sm" onclick="copyWebhook()"><i
-                                    class="ti ti-copy"></i> Copy</button>
+                    <div>
+                        <h6 class="mb-0 fw-bold" style="color:#202124;">Webhook Endpoints</h6>
+                        <p class="mb-0 text-muted" style="font-size:12px;">GHL sends data here → Google Ads conversion uploads automatically.</p>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+
+                    <!-- Add new webhook -->
+                    <div class="mb-4">
+                        <div class="d-flex gap-2 mb-1">
+                            <input type="text" id="new-webhook-name" class="form-control"
+                                placeholder='e.g. Lead Form, Purchase Confirmed, Appointment Booked'
+                                style="font-size:13px;height:40px;border-radius:8px;"
+                                oninput="previewWebhookUrl(this.value)">
+                            <button class="btn btn-primary px-4 d-flex align-items-center gap-2"
+                                onclick="addWebhook(this)" style="height:40px;border-radius:8px;white-space:nowrap;">
+                                <i class="ti ti-plus"></i> Add
+                            </button>
                         </div>
+
+                        <!-- Live URL preview -->
+                        <div id="url-preview-box" style="display:none;" class="mt-2 px-3 py-2 rounded-2 border" style="background:#f8f9fa;">
+                            <span style="font-size:11px;color:#9aa0a6;font-weight:600;">GENERATED URL PREVIEW:</span><br>
+                            <code id="url-preview-text" style="font-size:11.5px;color:#1a73e8;word-break:break-all;"></code>
+                        </div>
+
+                        <!-- Format hint & Guide -->
+                        <div class="mt-3 p-3 rounded-3 border" style="background:#fcfdff; border-style: dashed !important;">
+                            <div class="d-flex align-items-center gap-2 mb-2" style="font-size:12px; font-weight:700; color:#444; text-transform:uppercase; letter-spacing:0.5px;">
+                                <i class="ti ti-bulb text-warning" style="font-size:16px;"></i> How it works
+                            </div>
+                            <div style="font-size:12px; color:#5f6368; line-height:1.6;">
+                                <div class="mb-2">1. Enter a name (like <strong>"Lead Form"</strong>).</div>
+                                <div class="mb-2">2. We generate a full, unique link including your domain:</div>
+                                <div class="p-2 border rounded-2 bg-white d-flex align-items-center gap-2" style="font-family:monospace;font-size:11px;">
+                                    <span class="text-muted">Example:</span> 
+                                    <span style="color:#1a73e8;">https://your-domain.com/webhooks/ghl/location-id/lead-form</span>
+                                </div>
+                                <div class="mt-2">3. Copy that link and paste it into local GHL Automation.</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="add-webhook-error" class="text-danger mb-2" style="font-size:12px;display:none;"></div>
+
+                    <!-- Saved webhooks -->
+                    <div id="webhooks-list">
+                        <% if (!agency.customWebhooks || agency.customWebhooks.length === 0) { %>
+                        <div id="empty-webhooks" class="text-center py-4 text-muted">
+                            <i class="ti ti-plug-connected-x" style="font-size:36px;display:block;margin-bottom:8px;"></i>
+                            <p class="mb-0" style="font-size:13px;">No webhooks yet. Add one above and paste the URL into GHL Automation.</p>
+                        </div>
+                        <% } else { %>
+                        <div id="empty-webhooks" style="display:none;"></div>
+                        <% } %>
+
+                        <% (agency.customWebhooks || []).forEach(wh => { %>
+                        <% const whUrl = baseUrl + '/webhooks/ghl/' + agency.locationId + '/' + wh.slug; %>
+                        <div class="webhook-row border rounded-3 bg-white p-3 mb-2 d-flex align-items-center gap-3" data-slug="<%= wh.slug %>">
+                            <div class="flex-grow-1 overflow-hidden">
+                                <div class="fw-semibold mb-1" style="font-size:13px;color:#202124;"><%= wh.name %></div>
+                                <code style="font-size:11px;color:#1a73e8;word-break:break-all;"><%= whUrl %></code>
+                            </div>
+                            <div class="d-flex gap-1 flex-shrink-0">
+                                <button class="btn btn-sm btn-light border px-2"
+                                    onclick="copyWebhookUrl(this)" data-url="<%= whUrl %>" title="Copy URL">
+                                    <i class="ti ti-copy" style="font-size:14px;"></i>
+                                </button>
+                                <button class="btn btn-sm btn-light border px-2 text-danger"
+                                    onclick="deleteWebhook(this, '<%= wh.slug %>')" title="Delete">
+                                    <i class="ti ti-trash" style="font-size:14px;"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <% }) %>
+                    </div>
+
+                    <div class="mt-3 p-2 rounded-2 border d-flex align-items-start gap-2" style="background:#f8f9fa;font-size:12px;color:#5f6368;">
+                        <i class="ti ti-info-circle mt-1" style="flex-shrink:0;color:#1a73e8;"></i>
+                        <span>In GHL: go to <strong>Automation → Add Action → Webhook</strong>, paste the URL. 
+                        GHL will POST contact data to this URL which uploads the conversion to <strong>Google Ads</strong> automatically.</span>
                     </div>
                 </div>
             </div>
@@ -840,9 +906,127 @@
         }
 
         function copyWebhook() {
-            const url = document.getElementById('webhook-url').innerText.trim();
+            const url = document.getElementById('webhook-url')?.innerText?.trim() || '';
             navigator.clipboard.writeText(url).then(() => {
                 Swal.fire({ icon: 'success', title: 'Copied!', text: 'Webhook URL copied.', timer: 1500, showConfirmButton: false });
+            });
+        }
+
+        function copyById(elementId) {
+            const text = (document.getElementById(elementId)?.innerText || '').trim();
+            navigator.clipboard.writeText(text).then(() => {
+                Swal.fire({ icon: 'success', title: 'Copied!', text: 'Webhook URL copied to clipboard.', timer: 1200, showConfirmButton: false });
+            });
+        }
+
+        // ── Webhook Management ───────────────────────────────────────────────
+        const LOCATION_ID_FOR_WH = '<%= agency.locationId %>';
+        const BASE_URL_FOR_WH    = '<%= baseUrl %>';
+
+        function toSlug(name) {
+            return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+        }
+
+        function previewWebhookUrl(name) {
+            const box  = document.getElementById('url-preview-box');
+            const code = document.getElementById('url-preview-text');
+            const slug = toSlug(name);
+            if (slug) {
+                code.innerText = `${BASE_URL_FOR_WH}/webhooks/ghl/${LOCATION_ID_FOR_WH}/${slug}`;
+                box.style.display = '';
+            } else {
+                box.style.display = 'none';
+            }
+        }
+
+        async function addWebhook(btn) {
+            const nameInput = document.getElementById('new-webhook-name');
+            const errDiv    = document.getElementById('add-webhook-error');
+            const name = (nameInput.value || '').trim();
+
+            errDiv.style.display = 'none';
+            if (!name) { errDiv.innerText = 'Please enter a webhook name.'; errDiv.style.display = ''; return; }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="ti ti-loader-2 me-1"></i> Adding...';
+
+            try {
+                const r = await fetch(`/agencies/${LOCATION_ID_FOR_WH}/webhooks`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+                const data = await r.json();
+                if (!data.success) throw new Error(data.error);
+
+                const { slug } = data.webhook;
+                const fullUrl  = `${BASE_URL_FOR_WH}/webhooks/ghl/${LOCATION_ID_FOR_WH}/${slug}`;
+
+                // Hide empty state
+                document.getElementById('empty-webhooks').style.display = 'none';
+
+                // Insert new row
+                const list = document.getElementById('webhooks-list');
+                const row  = document.createElement('div');
+                row.className = 'webhook-row border rounded-3 bg-white p-3 mb-2 d-flex align-items-center gap-3';
+                row.dataset.slug = slug;
+                row.innerHTML = `
+                    <div class="flex-grow-1 overflow-hidden">
+                        <div class="fw-semibold mb-1" style="font-size:13px;color:#202124;">${data.webhook.name}</div>
+                        <code style="font-size:11px;color:#1a73e8;word-break:break-all;">${fullUrl}</code>
+                    </div>
+                    <div class="d-flex gap-1 flex-shrink-0">
+                        <button class="btn btn-sm btn-light border px-2"
+                            onclick="copyWebhookUrl(this)" data-url="${fullUrl}" title="Copy URL">
+                            <i class="ti ti-copy" style="font-size:14px;"></i>
+                        </button>
+                        <button class="btn btn-sm btn-light border px-2 text-danger"
+                            onclick="deleteWebhook(this, '${slug}')" title="Delete">
+                            <i class="ti ti-trash" style="font-size:14px;"></i>
+                        </button>
+                    </div>`;
+                list.appendChild(row);
+
+                nameInput.value = '';
+            } catch(e) {
+                errDiv.innerText = e.message;
+                errDiv.style.display = '';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="ti ti-plus"></i> Add';
+            }
+        }
+
+        async function deleteWebhook(btn, slug) {
+            const confirmed = await Swal.fire({
+                title: 'Delete webhook?',
+                text: 'This URL will stop working. GHL automations using it will fail.',
+                icon: 'warning', showCancelButton: true,
+                confirmButtonText: 'Yes, delete', confirmButtonColor: '#d33'
+            });
+            if (!confirmed.isConfirmed) return;
+
+            btn.disabled = true;
+            try {
+                const r = await fetch(`/agencies/${LOCATION_ID_FOR_WH}/webhooks/${slug}`, { method: 'DELETE' });
+                const data = await r.json();
+                if (!data.success) throw new Error(data.error);
+                const row = document.querySelector(`.webhook-row[data-slug="${slug}"]`);
+                if (row) row.remove();
+                // Show empty state if no webhooks left
+                if (!document.querySelector('.webhook-row')) {
+                    document.getElementById('empty-webhooks').style.display = '';
+                }
+            } catch(e) {
+                Swal.fire('Error', e.message, 'error');
+                btn.disabled = false;
+            }
+        }
+
+        function copyWebhookUrl(btn) {
+            const url = btn.dataset.url || '';
+            navigator.clipboard.writeText(url).then(() => {
+                Swal.fire({ icon: 'success', title: 'Copied!', text: 'Webhook URL copied to clipboard.', timer: 1200, showConfirmButton: false });
             });
         }
 

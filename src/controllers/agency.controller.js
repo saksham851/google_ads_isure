@@ -147,6 +147,52 @@ const agencyController = {
         } catch (error) {
             res.status(500).json({ success: false, error: error.message });
         }
+    },
+
+    // ─────────────────────────────────────────────────────────────────
+    // POST /agencies/:locationId/webhooks  { name }
+    // ─────────────────────────────────────────────────────────────────
+    addWebhook: async (req, res) => {
+        try {
+            const { name } = req.body;
+            if (!name || !name.trim()) return res.status(400).json({ success: false, error: 'Webhook name is required.' });
+
+            // Auto-generate URL-safe slug from name
+            const slug = name.trim()
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '');
+
+            const agency = await Agency.findOne({ locationId: req.params.locationId });
+            if (!agency) return res.status(404).json({ success: false, error: 'Sub-account not found.' });
+
+            // Prevent duplicate slugs
+            if (agency.customWebhooks.some(w => w.slug === slug)) {
+                return res.status(400).json({ success: false, error: `A webhook with slug "${slug}" already exists.` });
+            }
+
+            agency.customWebhooks.push({ name: name.trim(), slug });
+            await agency.save();
+
+            res.json({ success: true, webhook: { name: name.trim(), slug } });
+        } catch (error) {
+            res.status(500).json({ success: false, error: error.message });
+        }
+    },
+
+    // ─────────────────────────────────────────────────────────────────
+    // DELETE /agencies/:locationId/webhooks/:slug
+    // ─────────────────────────────────────────────────────────────────
+    removeWebhook: async (req, res) => {
+        try {
+            await Agency.findOneAndUpdate(
+                { locationId: req.params.locationId },
+                { $pull: { customWebhooks: { slug: req.params.slug } } }
+            );
+            res.json({ success: true });
+        } catch (error) {
+            res.status(500).json({ success: false, error: error.message });
+        }
     }
 };
 

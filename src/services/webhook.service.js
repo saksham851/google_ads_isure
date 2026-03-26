@@ -9,8 +9,8 @@ class WebhookService {
      * Handle an incoming GHL webhook payload.
      * Supports multiple GCLID field locations GHL may use.
      */
-    async handleGHLWebhook(payload) {
-        logger.info('[Webhook] Received GHL payload');
+    async handleGHLWebhook(payload, overrideLocationId = null, eventType = 'general') {
+        logger.info(`[Webhook] Received GHL payload | event: ${eventType}`);
 
         const {
             contact_id,
@@ -29,7 +29,7 @@ class WebhookService {
         } = payload;
 
         const contactId  = contact_id  || contact?.id;
-        const locationId = location_id || contact?.locationId;
+        const locationId = overrideLocationId || location_id || contact?.locationId;
 
         if (!contactId) {
             throw new Error('Payload missing contact_id');
