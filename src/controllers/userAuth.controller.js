@@ -5,12 +5,12 @@ const nodemailer = require('nodemailer');
 // Helper to create transport
 const createTransport = () => {
     return nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: process.env.SMTP_PORT,
-        secure: process.env.SMTP_SECURE === 'true',
+        host: process.env.MAIL_HOST || 'smtp.gmail.com',
+        port: parseInt(process.env.MAIL_PORT) || 465,
+        secure: process.env.MAIL_PORT == '465', // true for 465, false for other ports
         auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS
+            user: process.env.MAIL_USERNAME,
+            pass: process.env.MAIL_PASSWORD
         }
     });
 };
@@ -89,7 +89,7 @@ const userAuthController = {
             `;
 
             await transporter.sendMail({
-                from: `"Support" <${process.env.SMTP_FROM}>`,
+                from: `"${process.env.MAIL_FROM_NAME}" <${process.env.MAIL_FROM_ADDRESS}>`,
                 to: email,
                 subject: 'Password Reset Request',
                 html: template
