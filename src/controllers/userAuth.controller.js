@@ -27,7 +27,7 @@ const userAuthController = {
         try {
             const { email, password } = req.body;
             const user = await User.findOne({ email });
-            
+
             if (!user || !(await user.comparePassword(password))) {
                 req.flash('error', 'Invalid email or password');
                 return res.redirect('/user/login');
@@ -38,7 +38,7 @@ const userAuthController = {
                 email: user.email,
                 role: user.role
             };
-            
+
             res.redirect('/dashboard');
         } catch (error) {
             console.error('Login error:', error);
@@ -62,9 +62,16 @@ const userAuthController = {
     forgotPassword: async (req, res) => {
         try {
             const { email } = req.body;
+            console.log('--- Forgot Password Request ---');
+            console.log('Email:', email);
+            console.log('MAIL_HOST:', process.env.MAIL_HOST);
+            console.log('MAIL_PORT:', process.env.MAIL_PORT);
+            console.log('MAIL_USERNAME:', process.env.MAIL_USERNAME);
+
             const user = await User.findOne({ email });
 
             if (!user) {
+                console.log('User not found in DB');
                 req.flash('success', 'If an account exists with that email, a reset link has been sent.');
                 return res.redirect('/user/forgot-password');
             }
@@ -74,6 +81,7 @@ const userAuthController = {
             user.resetToken = token;
             user.resetTokenExpiry = Date.now() + 3600000; // 1 hour
             await user.save();
+            console.log('Reset token generated and saved');
 
             // Send email
             const transporter = createTransport();
@@ -88,6 +96,7 @@ const userAuthController = {
                 <p>If you did not request this, please ignore this email.</p>
             `;
 
+            console.log('Attempting to send email via nodemailer...');
             await transporter.sendMail({
                 from: `"${process.env.MAIL_FROM_NAME}" <${process.env.MAIL_FROM_ADDRESS}>`,
                 to: email,
@@ -95,10 +104,12 @@ const userAuthController = {
                 html: template
             });
 
+            console.log('Email sent successfully!');
             req.flash('success', 'A reset link has been sent to your email.');
             res.redirect('/user/forgot-password');
         } catch (error) {
-            console.error('Forgot password error:', error);
+            console.error('--- Forgot Password Error ---');
+            console.error(error);
             req.flash('error', 'Something went wrong while sending the email.');
             res.redirect('/user/forgot-password');
         }
@@ -107,9 +118,9 @@ const userAuthController = {
     // GET /reset-password/:token
     resetPasswordView: async (req, res) => {
         const { token } = req.params;
-        const user = await User.findOne({ 
-            resetToken: token, 
-            resetTokenExpiry: { $gt: Date.now() } 
+        const user = await User.findOne({
+            resetToken: token,
+            resetTokenExpiry: { $gt: Date.now() }
         });
 
         if (!user) {
@@ -131,9 +142,9 @@ const userAuthController = {
                 return res.redirect(`/user/reset-password/${token}`);
             }
 
-            const user = await User.findOne({ 
-                resetToken: token, 
-                resetTokenExpiry: { $gt: Date.now() } 
+            const user = await User.findOne({
+                resetToken: token,
+                resetTokenExpiry: { $gt: Date.now() }
             });
 
             if (!user) {
