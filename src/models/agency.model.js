@@ -6,7 +6,7 @@ const conversionMappingSchema = new mongoose.Schema({
     conversionActionId:   { type: String, set: encrypt, get: decrypt }, // Google Ads Conversion Action ID
     conversionActionName: { type: String }, // Human-readable name for display
     conversionValue:      { type: Number, default: 0 }
-}, { _id: false, toObject: { getters: true }, toJSON: { getters: true } });
+}, { toObject: { getters: true }, toJSON: { getters: true } }); // Enabled _id (default)
 
 const agencySchema = new mongoose.Schema({
     agencyId:   { type: String, required: true }, // GHL Company/Agency ID
@@ -50,6 +50,7 @@ const agencySchema = new mongoose.Schema({
     customWebhooks: [{
         name:      { type: String, required: true }, // e.g. "Lead Form Submission"
         slug:      { type: String, required: true }, // e.g. "lead-form-submission"
+        mappingId: { type: String },                  // Link to one of the conversionMappings._id
         createdAt: { type: Date, default: Date.now }
     }],
 

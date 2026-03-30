@@ -193,6 +193,30 @@ const agencyController = {
         } catch (error) {
             res.status(500).json({ success: false, error: error.message });
         }
+    },
+
+    // ─────────────────────────────────────────────────────────────────
+    // PUT /agencies/:locationId/webhooks/:slug/mapping  { mappingId }
+    // ─────────────────────────────────────────────────────────────────
+    updateWebhookMapping: async (req, res) => {
+        try {
+            const { mappingId } = req.body;
+            const { locationId, slug } = req.params;
+
+            const agency = await Agency.findOne({ locationId });
+            if (!agency) return res.status(404).json({ success: false, error: 'Sub-account not found.' });
+
+            const webhook = agency.customWebhooks.find(w => w.slug === slug);
+            if (!webhook) return res.status(404).json({ success: false, error: 'Webhook not found.' });
+
+            // If mappingId is empty, it means "Global"
+            webhook.mappingId = mappingId || null;
+            await agency.save();
+
+            res.json({ success: true });
+        } catch (error) {
+            res.status(500).json({ success: false, error: error.message });
+        }
     }
 };
 

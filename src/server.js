@@ -57,7 +57,7 @@ app.use((req, res, next) => {
     res.locals.success  = req.flash('success');
     res.locals.user     = req.session.user || null;
     res.locals.activePage = '';
-    res.locals.baseUrl  = `${req.protocol}://${req.get('host')}`;
+    res.locals.baseUrl  = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
     next();
 });
 
@@ -72,8 +72,9 @@ app.use(morgan('dev'));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ── Routes ────────────────────────────────────────────────────────────────────
-// Public OAuth routes (no auth required — GHL/Google redirect here)
+// Public OAuth routes & Webhooks (no auth required)
 app.use('/auth',     authRoutes);
+app.use('/webhooks', webhookRoutes);
 
 // Authenticated app routes
 app.use('/user',     userAuthRoutes);
@@ -82,9 +83,6 @@ app.use('/',         logRoutes);
 
 // Google Ads JSON API (for frontend dropdowns)
 app.use('/google-ads', googleAdsRoutes);
-
-// GHL Webhook receiver (public — GHL posts here, no session)
-app.use('/webhooks', webhookRoutes);
 
 // ── Dashboard & Root ──────────────────────────────────────────────────────────
 app.get('/', (req, res) => {

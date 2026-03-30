@@ -13,5 +13,6 @@ router.post('/:locationId/disconnect-ghl', ctrl.disconnectGHL);
 router.delete('/:locationId',           ctrl.deleteAgency);
 router.post('/:locationId/webhooks',    ctrl.addWebhook);
 router.delete('/:locationId/webhooks/:slug', ctrl.removeWebhook);
+router.put('/:locationId/webhooks/:slug/mapping', ctrl.updateWebhookMapping);
 
 module.exports = router;

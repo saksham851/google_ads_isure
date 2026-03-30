@@ -9,7 +9,9 @@ class GoogleAdsService {
      * Process a conversion for a lead that has a gclid.
      * Finds the correct conversion action by matching the pipeline stage keyword.
      */
-    async processConversion(lead, agency, conversionValue = 0) {
+    async processConversion(lead, agency, conversionValue = 0, options = {}) {
+        const { currencyCode = 'USD', conversionTime: overrideTime = null, forcedActionId = null } = options;
+
         if (!lead.gclid) {
             logger.info(`[GoogleAds] Lead ${lead.ghlContactId} has no GCLID. Skipping.`);
             return { success: false, reason: 'No GCLID' };
@@ -30,7 +32,14 @@ class GoogleAdsService {
         let conversionActionId   = null;
         let conversionActionName = null;
 
-        if (agency.conversionMappings && agency.conversionMappings.length > 0) {
+        // Use forcedActionId if provided (can be full resource name or just ID)
+        if (forcedActionId) {
+            conversionActionId = forcedActionId.includes('conversionActions/') 
+                ? forcedActionId.split('conversionActions/')[1] 
+                : forcedActionId;
+            conversionActionName = 'Manual/Forced Action';
+        } 
+        else if (agency.conversionMappings && agency.conversionMappings.length > 0) {
             const stage   = (lead.pipelineStage || '').toLowerCase();
             const mapping = agency.conversionMappings.find(m =>
                 stage.includes((m.pipelineStageKeyword || '').toLowerCase())
@@ -46,17 +55,17 @@ class GoogleAdsService {
         }
 
         if (!conversionActionId) {
-            logger.warn(`[GoogleAds] No conversion action mapped for stage: "${lead.pipelineStage}". Skipping.`);
+            logger.warn(`[GoogleAds] No conversion action mapped for stage: "${lead.pipelineStage || 'unknown'}". Skipping.`);
             return { success: false, reason: 'No Conversion Action mapped for this stage' };
         }
 
-        const conversionTime = formatForGoogleAds(new Date());
+        const conversionTime = overrideTime || formatForGoogleAds(new Date());
         const conversionData = {
             gclid:              lead.gclid,
             conversion_action:  `customers/${customerId}/conversionActions/${conversionActionId}`,
             conversion_date_time: conversionTime,
             conversion_value:   conversionValue > 0 ? conversionValue : (lead.conversionValue || 1),
-            currency_code:      'USD'
+            currency_code:      currencyCode
         };
 
         // ── Save a pending log entry ──────────────────────────────────────

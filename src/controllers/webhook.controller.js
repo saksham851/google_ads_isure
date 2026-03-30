@@ -3,13 +3,13 @@ const WebhookLog = require('../models/webhookLog.model');
 const logger = require('../utils/logger');
 
 exports.ghlWebhook = async (req, res, next) => {
-    const payload    = req.body;
-    const headers    = req.headers;
+    const payload = req.body;
+    const headers = req.headers;
     const locationId = req.params.locationId || null;
-    const eventType  = req.params.eventType  || 'general';
+    const eventType = req.params.slug || req.params.eventType || 'general';
 
     const webLog = new WebhookLog({
-        source:     'GHL',
+        source: 'GHL',
         locationId,
         eventType,
         payload,
@@ -38,4 +38,11 @@ exports.ghlWebhook = async (req, res, next) => {
         logger.error('Error in Webhook Controller:', error);
         if (!res.headersSent) next(error);
     }
+};
+
+exports.verifyWebhook = (req, res) => {
+    res.status(200).json({ 
+        status: 'active', 
+        message: 'GHL Webhook endpoint is reachable. Please use POST for processing data.' 
+    });
 };

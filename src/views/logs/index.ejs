@@ -58,7 +58,7 @@
                                 <td><%= log.leadId ? log.leadId.email : 'N/A' %></td>
                                 <td><code><%= (log.gclid || '').substring(0, 16) %>...</code></td>
                                 <td><%= log.conversionAction || '—' %></td>
-                                <td>$<%= log.conversionValue || 0 %></td>
+                                <td><%= log.conversionValue || 0 %></td>
                                 <td>
                                     <% 
                                         var statusColor = log.status === 'success' ? '#1e8e3e' : (log.status === 'failed' ? '#c5221f' : '#b06000');
