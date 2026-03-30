@@ -1,13 +1,13 @@
-const Agency              = require('../models/agency.model');
+const Agency = require('../models/agency.model');
 const googleAdsIntegration = require('../integrations/googleAds.integration');
 const googleAdsAuthService = require('../services/googleAdsAuth.service');
-const logger              = require('../utils/logger');
+const logger = require('../utils/logger');
 
 // Helper to get custom credentials for an agency
 const getCustomCreds = (agency) => {
     return {
-        clientId:       agency.customGoogleAdsClientId,
-        clientSecret:   agency.customGoogleAdsClientSecret,
+        clientId: agency.customGoogleAdsClientId,
+        clientSecret: agency.customGoogleAdsClientSecret,
         developerToken: agency.customGoogleAdsDeveloperToken
     };
 };
@@ -88,11 +88,11 @@ exports.saveMapping = async (req, res) => {
         const agency = await Agency.findOneAndUpdate(
             { locationId },
             {
-                googleMccId:          mccId   || null,
-                googleMccName:        mccName || null,
-                googleAdsCustomerId:  customerId,
+                googleMccId: mccId || null,
+                googleMccName: mccName || null,
+                googleAdsCustomerId: customerId,
                 googleAdsAccountName: customerName || null,
-                conversionMappings:   Array.isArray(conversionMappings) ? conversionMappings : []
+                conversionMappings: Array.isArray(conversionMappings) ? conversionMappings : []
             },
             { new: true }
         );
@@ -110,20 +110,66 @@ exports.saveMapping = async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /google-ads/save-credentials
 // Body: { locationId, clientId, clientSecret, developerToken }
-// Saves BYOC credentials to the agency
+// Saves BYOC credentials to the agency with partial updates and token clearing
 // ─────────────────────────────────────────────────────────────────────────────
 exports.saveCredentials = async (req, res) => {
     try {
         const { locationId, clientId, clientSecret, developerToken } = req.body;
         if (!locationId) return res.status(400).json({ error: 'locationId is required' });
 
+        const updateData = {};
+        let credentialsChanged = false;
+
+        // Process Client ID
+        if (clientId !== undefined) {
+            if (clientId === null || clientId === "") {
+                updateData.customGoogleAdsClientId = null;
+                credentialsChanged = true;
+            } else if (!clientId.includes('****')) {
+                updateData.customGoogleAdsClientId = clientId;
+                credentialsChanged = true;
+            }
+        }
+
+        // Process Client Secret
+        if (clientSecret !== undefined) {
+            if (clientSecret === null || clientSecret === "") {
+                updateData.customGoogleAdsClientSecret = null;
+                credentialsChanged = true;
+            } else if (!clientSecret.includes('****')) {
+                updateData.customGoogleAdsClientSecret = clientSecret;
+                credentialsChanged = true;
+            }
+        }
+
+        // Process Developer Token
+        if (developerToken !== undefined) {
+            if (developerToken === null || developerToken === "") {
+                updateData.customGoogleAdsDeveloperToken = null;
+            } else if (!developerToken.includes('****')) {
+                updateData.customGoogleAdsDeveloperToken = developerToken;
+            }
+        }
+
+        // If Client ID or Secret changed (or were cleared), we MUST clear the OAuth tokens 
+        // because they are bound to the specific client credentials.
+        if (credentialsChanged) {
+            logger.info(`[GoogleAdsCtrl] Credentials changed for agency ${locationId}. Clearing OAuth tokens and mappings.`);
+            updateData.googleAccessToken = null;
+            updateData.googleRefreshToken = null;
+            updateData.googleTokenExpiry = null;
+            
+            // Also clear account selection as they depend on the old token/creds
+            updateData.googleMccId = null;
+            updateData.googleMccName = null;
+            updateData.googleAdsCustomerId = null;
+            updateData.googleAdsAccountName = null;
+            updateData.conversionMappings = [];
+        }
+
         const agency = await Agency.findOneAndUpdate(
             { locationId },
-            {
-                customGoogleAdsClientId:       clientId || null,
-                customGoogleAdsClientSecret:   clientSecret || null,
-                customGoogleAdsDeveloperToken: developerToken || null
-            },
+            { $set: updateData },
             { new: true }
         );
 
