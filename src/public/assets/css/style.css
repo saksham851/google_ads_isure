@@ -23883,7 +23883,6 @@ pre[class*=language-]>code {
 
 .card {
   box-shadow: var(--pc-card-box-shadow);
-  margin-bottom: 24px;
   transition: box-shadow 0.2s ease-in-out;
 }
 

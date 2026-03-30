@@ -25,7 +25,12 @@ exports.getManagerAccounts = async (req, res) => {
         if (!agency) return res.status(404).json({ error: 'Agency not found' });
         if (!agency.googleRefreshToken) return res.status(400).json({ error: 'Google Ads not connected for this agency' });
 
-        const accounts = await googleAdsIntegration.listManagerAccounts(agency.googleRefreshToken, getCustomCreds(agency));
+        const creds = getCustomCreds(agency);
+        if (!creds.developerToken) {
+            return res.status(400).json({ error: 'Developer Token missing' });
+        }
+
+        const accounts = await googleAdsIntegration.listManagerAccounts(agency.googleRefreshToken, creds);
         res.json({ success: true, accounts });
     } catch (err) {
         logger.error('[GoogleAdsCtrl] getManagerAccounts error:', err.message);
@@ -46,7 +51,12 @@ exports.getClientAccounts = async (req, res) => {
         if (!agency) return res.status(404).json({ error: 'Agency not found' });
         if (!agency.googleRefreshToken) return res.status(400).json({ error: 'Google Ads not connected' });
 
-        const accounts = await googleAdsIntegration.listClientAccounts(mccId, agency.googleRefreshToken, getCustomCreds(agency));
+        const creds = getCustomCreds(agency);
+        if (!creds.developerToken) {
+            return res.status(400).json({ error: 'Developer Token missing' });
+        }
+
+        const accounts = await googleAdsIntegration.listClientAccounts(mccId, agency.googleRefreshToken, creds);
         res.json({ success: true, accounts });
     } catch (err) {
         logger.error('[GoogleAdsCtrl] getClientAccounts error:', err.message);
@@ -67,7 +77,12 @@ exports.getConversionActions = async (req, res) => {
         if (!agency) return res.status(404).json({ error: 'Agency not found' });
         if (!agency.googleRefreshToken) return res.status(400).json({ error: 'Google Ads not connected' });
 
-        const actions = await googleAdsIntegration.listConversionActions(customerId, mccId, agency.googleRefreshToken, getCustomCreds(agency));
+        const creds = getCustomCreds(agency);
+        if (!creds.developerToken) {
+            return res.status(400).json({ error: 'Developer Token missing' });
+        }
+
+        const actions = await googleAdsIntegration.listConversionActions(customerId, mccId, agency.googleRefreshToken, creds);
         res.json({ success: true, actions });
     } catch (err) {
         logger.error('[GoogleAdsCtrl] getConversionActions error:', err.message);
@@ -146,20 +161,26 @@ exports.saveCredentials = async (req, res) => {
         if (developerToken !== undefined) {
             if (developerToken === null || developerToken === "") {
                 updateData.customGoogleAdsDeveloperToken = null;
+                credentialsChanged = true; // Clearing dev token should also reset mappings
             } else if (!developerToken.includes('****')) {
                 updateData.customGoogleAdsDeveloperToken = developerToken;
+                credentialsChanged = true; // Changing dev token should reset mappings
             }
         }
 
-        // If Client ID or Secret changed (or were cleared), we MUST clear the OAuth tokens 
-        // because they are bound to the specific client credentials.
+        // If Client ID, Secret, or Developer Token changed (or were cleared), we MUST clear the mappings 
+        // because they rely on these credentials to be valid.
         if (credentialsChanged) {
-            logger.info(`[GoogleAdsCtrl] Credentials changed for agency ${locationId}. Clearing OAuth tokens and mappings.`);
-            updateData.googleAccessToken = null;
-            updateData.googleRefreshToken = null;
-            updateData.googleTokenExpiry = null;
+            logger.info(`[GoogleAdsCtrl] Finalizing reset for agency ${locationId} because credentials changed.`);
             
-            // Also clear account selection as they depend on the old token/creds
+            // 1. Clear OAuth tokens ONLY if Client ID or Secret were modified
+            if ((clientId !== undefined) || (clientSecret !== undefined)) {
+                updateData.googleAccessToken = null;
+                updateData.googleRefreshToken = null;
+                updateData.googleTokenExpiry = null;
+            }
+            
+            // 2. ALWAYS clear these because they depend on both OAuth AND Developer Token
             updateData.googleMccId = null;
             updateData.googleMccName = null;
             updateData.googleAdsCustomerId = null;
