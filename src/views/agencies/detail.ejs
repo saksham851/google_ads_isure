@@ -1145,12 +1145,14 @@
 
                 statusDiv.innerHTML = '<span class="text-success"><i class="ti ti-check me-1"></i>Saved successfully!</span>';
                 document.getElementById('btn-save-mapping').disabled = true; // Disable after save
-                setTimeout(() => statusDiv.innerHTML = '', 3000);
+                
+                // Refresh page to ensure all dropdowns (Step 4) are updated with new mapping IDs
+                setTimeout(() => location.reload(), 1000);
             } catch (e) {
                 statusDiv.innerHTML = `<span class="text-danger"><i class="ti ti-x me-1"></i>${e.message}</span>`;
+                if (btn) btn.disabled = false;
             } finally {
                 // Do not re-enable if it was a success, but we handled that above.
-                // If it failed, we might want to re-enable it? Actually btn.disabled=false is at 999.
             }
         }
 
@@ -1171,6 +1173,7 @@
         // ── Webhook Management ───────────────────────────────────────────────
         const LOCATION_ID_FOR_WH = '<%= agency.locationId %>';
         const BASE_URL_FOR_WH = '<%= baseUrl %>';
+        const agencyMappings = <%- JSON.stringify(agency.conversionMappings || []) %>;
 
         function toSlug(name) {
             return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
@@ -1242,7 +1245,7 @@
                                     data-current-value=""
                                     onchange="updateWebhookMapping('${slug}', this.value, this)">
                                 <option value="" selected>Select Mapping —</option>
-                                ${(typeof agency !== 'undefined' && agency.conversionMappings || []).map(m => `
+                                ${agencyMappings.map(m => `
                                     <option value="${m._id}">${m.pipelineStageKeyword}</option>
                                 `).join('')}
                             </select>
