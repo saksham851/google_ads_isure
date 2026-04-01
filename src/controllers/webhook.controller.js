@@ -18,25 +18,34 @@ exports.ghlWebhook = async (req, res, next) => {
     });
 
     try {
-        // Respond immediately so GHL doesn't time out
-        res.status(200).json({ received: true });
+        // Process and wait for the result
+        const result = await webhookService.handleGHLWebhook(payload, locationId, eventType);
 
-        // Process asynchronously
-        webhookService.handleGHLWebhook(payload, locationId, eventType)
-            .then(async () => {
-                webLog.status = 'success';
-                await webLog.save();
-            })
-            .catch(async (err) => {
-                logger.error('Webhook processing failed: ', err);
-                webLog.status = 'error';
-                webLog.errorMessage = err.message;
-                await webLog.save();
-            });
+        // Update log to success
+        webLog.status = 'success';
+        await webLog.save();
+
+        // Send successful response
+        res.status(200).json({ 
+            received: true, 
+            status: 'processed',
+            leadId: result.leadId 
+        });
 
     } catch (error) {
-        logger.error('Error in Webhook Controller:', error);
-        if (!res.headersSent) next(error);
+        logger.error('Webhook processing failed: ', error);
+        
+        // Update log to error
+        webLog.status = 'error';
+        webLog.errorMessage = error.message;
+        await webLog.save();
+
+        // Send error response
+        res.status(500).json({ 
+            received: true, 
+            status: 'error', 
+            message: error.message 
+        });
     }
 };
 
