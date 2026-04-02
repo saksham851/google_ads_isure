@@ -39,7 +39,9 @@ const userAuthController = {
             req.session.user = {
                 id: user._id,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                agencyId: user.agencyId,
+                locationId: user.locationId
             };
 
             const redirectUrl = req.session.returnTo || '/dashboard';

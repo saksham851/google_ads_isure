@@ -6,32 +6,51 @@ const logController = {
     // GET /logs
     index: async (req, res) => {
         try {
-            const { locationId, days, page } = req.query;
+            const { locationId, days, page, search } = req.query;
             const currentPage = parseInt(page) || 1;
             const limit = 10;
             const skip = (currentPage - 1) * limit;
 
             let filter = {};
             let selectedAgencyName = null;
+            const user = req.session.user;
 
-            // Date Range Filter
+            let agenciesQuery = {};
+            if (user.role !== 'superadmin') {
+                if (user.agencyId) agenciesQuery = { agencyId: user.agencyId };
+                else if (user.locationId) agenciesQuery = { locationId: user.locationId };
+                else agenciesQuery = { locationId: 'none' };
+            }
+
+            const activeLocationId = req.query.locationId;
+
+            if (search) {
+                // To search by lead email, we might need a join or search by gclid/status
+                filter.$or = [
+                    { gclid: { $regex: search, $options: 'i' } },
+                    { conversionAction: { $regex: search, $options: 'i' } }
+                ];
+            }
+
             if (days && days !== 'all') {
                 const date = new Date();
                 date.setDate(date.getDate() - parseInt(days));
                 filter.createdAt = { $gte: date };
             }
 
-            // Agency Filter
-            if (locationId) {
-                const agency = await Agency.findOne({ locationId });
+            if (activeLocationId) {
+                const agency = await Agency.findOne({ locationId: activeLocationId });
                 if (agency) {
                     filter.agencyId = agency._id;
                     selectedAgencyName = agency.agencyName;
                 }
+            } else if (user.role !== 'superadmin') {
+                const userAgencies = await Agency.find(agenciesQuery);
+                filter.agencyId = { $in: userAgencies.map(a => a._id) };
             }
 
             const [agencies, logs, totalLogs] = await Promise.all([
-                Agency.find().sort({ agencyName: 1 }),
+                Agency.find(agenciesQuery).sort({ agencyName: 1 }),
                 ConversionLog.find(filter)
                     .populate('leadId')
                     .populate('agencyId')
@@ -51,6 +70,8 @@ const logController = {
                 locationId,
                 selectedAgencyName,
                 days: days || 'all',
+                search: search || '',
+                user,
                 currentPage,
                 totalPages,
                 totalLogs,
@@ -66,13 +87,31 @@ const logController = {
     // GET /webhooks-logs
     webhookLogs: async (req, res) => {
         try {
-            const { locationId, days, page, eventType } = req.query;
+            const { locationId, days, page, eventType, search } = req.query;
             const currentPage = parseInt(page) || 1;
             const limit = 10;
             const skip = (currentPage - 1) * limit;
 
             let filter = {};
             let selectedAgencyName = null;
+            const user = req.session.user;
+
+            let agenciesQuery = {};
+            if (user.role !== 'superadmin') {
+                if (user.agencyId) agenciesQuery = { agencyId: user.agencyId };
+                else if (user.locationId) agenciesQuery = { locationId: user.locationId };
+                else agenciesQuery = { locationId: 'none' };
+            }
+
+            const activeLocationId = req.query.locationId;
+
+            if (search) {
+                filter.$or = [
+                    { eventType: { $regex: search, $options: 'i' } },
+                    { errorMessage: { $regex: search, $options: 'i' } },
+                    { 'payload.contact.email': { $regex: search, $options: 'i' } }
+                ];
+            }
 
             // Date Range Filter
             if (days && days !== 'all') {
@@ -82,17 +121,43 @@ const logController = {
             }
 
             // Agency Filter
-            if (locationId) {
-                filter = {
-                    ...filter,
+            if (activeLocationId) {
+                const locationFilter = {
                     $or: [
-                        { locationId },
-                        { 'payload.location_id': locationId },
-                        { 'payload.contact.locationId': locationId }
+                        { locationId: activeLocationId },
+                        { 'payload.location_id': activeLocationId },
+                        { 'payload.contact.locationId': activeLocationId }
                     ]
                 };
-                const agency = await Agency.findOne({ locationId });
+
+                if (filter.$or) {
+                    const searchFilter = filter.$or;
+                    delete filter.$or;
+                    filter = { ...filter, $and: [ { $or: searchFilter }, locationFilter ] };
+                } else {
+                    filter = { ...filter, ...locationFilter };
+                }
+                
+                const agency = await Agency.findOne({ locationId: activeLocationId });
                 if (agency) selectedAgencyName = agency.agencyName;
+            } else if (user.role !== 'superadmin') {
+                const userAgencies = await Agency.find(agenciesQuery);
+                const locationIds = userAgencies.map(a => a.locationId);
+                const locationFilter = {
+                    $or: [
+                        { locationId: { $in: locationIds } },
+                        { 'payload.location_id': { $in: locationIds } },
+                        { 'payload.contact.locationId': { $in: locationIds } }
+                    ]
+                };
+
+                if (filter.$or) {
+                    const searchFilter = filter.$or;
+                    delete filter.$or;
+                    filter = { ...filter, $and: [ { $or: searchFilter }, locationFilter ] };
+                } else {
+                    filter = { ...filter, ...locationFilter };
+                }
             }
 
             // Event Type Filter
@@ -101,7 +166,7 @@ const logController = {
             }
 
             const [agencies, rawLogs, totalLogs] = await Promise.all([
-                Agency.find().sort({ agencyName: 1 }),
+                Agency.find(agenciesQuery).sort({ agencyName: 1 }),
                 WebhookLog.find(filter)
                     .sort({ createdAt: -1 })
                     .skip(skip)
@@ -129,9 +194,11 @@ const logController = {
                 agencies,
                 activePage: 'webhooks',
                 locationId,
+                user,
                 selectedAgencyName,
                 eventType: eventType || '',
                 days: days || 'all',
+                search: search || '',
                 currentPage,
                 totalPages,
                 totalLogs,

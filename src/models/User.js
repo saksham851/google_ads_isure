@@ -17,9 +17,12 @@ const userSchema = new mongoose.Schema({
     resetTokenExpiry: Date,
     role: {
         type: String,
-        default: 'admin'
-    }
-}, { timestamps: true });
+        enum: ['superadmin', 'user'],
+        default: 'user'
+    },
+    agencyId: String,  // Link to GHL Agency ID
+    locationId: String // Link to GHL Location ID (for 'user' role)
+} , { timestamps: true });
 
 // Hash password before saving
 userSchema.pre('save', async function(next) {

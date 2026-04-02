@@ -9,13 +9,30 @@ const agencyController = {
     // ─────────────────────────────────────────────────────────────────
     index: async (req, res) => {
         try {
-            const page = parseInt(req.query.page) || 1;
+            const { page, search } = req.query;
+            const currentPage = parseInt(page) || 1;
             const limit = 10;
-            const skip = (page - 1) * limit;
+            const skip = (currentPage - 1) * limit;
+
+            const user = req.session.user;
+            let filter = {};
+            if (user.role !== 'superadmin') {
+                if (user.agencyId) {
+                    filter = { agencyId: user.agencyId };
+                } else if (user.locationId) {
+                    filter = { locationId: user.locationId };
+                } else {
+                    filter = { locationId: 'none' };
+                }
+            }
+
+            if (search) {
+                filter.agencyName = { $regex: search, $options: 'i' };
+            }
 
             const [agencies, totalAgencies] = await Promise.all([
-                Agency.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
-                Agency.countDocuments()
+                Agency.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+                Agency.countDocuments(filter)
             ]);
 
             const totalPages = Math.ceil(totalAgencies / limit);
@@ -23,9 +40,10 @@ const agencyController = {
             res.render('agencies/index', {
                 title: 'Sub-Accounts / Agencies',
                 agencies,
-                currentPage: page,
+                currentPage,
                 totalPages,
                 totalAgencies,
+                search: search || '',
                 activePage: 'agencies',
                 layout: 'layouts/dashboard_layout'
             });

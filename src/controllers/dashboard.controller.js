@@ -9,13 +9,45 @@ const dashboardController = {
             const limit = 5;
             const skip = (page - 1) * limit;
 
+            const user = req.session.user;
+            let logsFilter = {};
+            let agencyFilter = {};
+            let webhookFilter = {};
+
+            if (user.role !== 'superadmin') {
+                if (user.agencyId) {
+                    const agencies = await Agency.find({ agencyId: user.agencyId });
+                    const locationIds = agencies.map(a => a.locationId);
+                    const agencyObjectIds = agencies.map(a => a._id);
+                    
+                    agencyFilter = { locationId: { $in: locationIds } };
+                    webhookFilter = { locationId: { $in: locationIds } };
+                    logsFilter = { agencyId: { $in: agencyObjectIds } };
+                } else if (user.locationId) {
+                    agencyFilter = { locationId: user.locationId };
+                    webhookFilter = { locationId: user.locationId };
+                    
+                    const agency = await Agency.findOne({ locationId: user.locationId });
+                    if (agency) {
+                        logsFilter = { agencyId: agency._id };
+                    } else {
+                        logsFilter = { agencyId: null }; 
+                    }
+                } else {
+                    // Fallback if neither exists
+                    agencyFilter = { locationId: null };
+                    webhookFilter = { locationId: null };
+                    logsFilter = { agencyId: null };
+                }
+            }
+
             const [agencyCount, conversionCount, webhookCount, failedCount, recentLogs, totalRecentLogs] = await Promise.all([
-                Agency.countDocuments(),
-                ConversionLog.countDocuments({ status: 'success' }),
-                WebhookLog.countDocuments(),
-                ConversionLog.countDocuments({ status: 'failed' }),
-                ConversionLog.find().populate('leadId').sort({ createdAt: -1 }).skip(skip).limit(limit),
-                ConversionLog.countDocuments()
+                Agency.countDocuments(agencyFilter),
+                ConversionLog.countDocuments({ ...logsFilter, status: 'success' }),
+                WebhookLog.countDocuments(webhookFilter),
+                ConversionLog.countDocuments({ ...logsFilter, status: 'failed' }),
+                ConversionLog.find(logsFilter).populate('leadId').sort({ createdAt: -1 }).skip(skip).limit(limit),
+                ConversionLog.countDocuments(logsFilter)
             ]);
 
             const totalPages = Math.ceil(totalRecentLogs / limit);

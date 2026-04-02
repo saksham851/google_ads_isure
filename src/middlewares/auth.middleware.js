@@ -20,4 +20,20 @@ const isAuthenticated = (req, res, next) => {
     res.redirect('/user/login');
 };
 
-module.exports = { isAuthenticated };
+const isSuperadmin = (req, res, next) => {
+    if (req.session && req.session.user && req.session.user.role === 'superadmin') {
+        return next();
+    }
+    req.flash('error', 'Access denied. Superadmin privileges required.');
+    res.redirect('/dashboard');
+};
+
+const isUser = (req, res, next) => {
+    if (req.session && req.session.user && (req.session.user.role === 'user' || req.session.user.role === 'superadmin')) {
+        return next();
+    }
+    req.flash('error', 'Access denied.');
+    res.redirect('/user/login');
+};
+
+module.exports = { isAuthenticated, isSuperadmin, isUser };

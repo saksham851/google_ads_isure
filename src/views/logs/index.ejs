@@ -9,13 +9,21 @@
                     </div>
                     
                     <form action="/logs" method="GET" class="d-flex align-items-center gap-2 flex-wrap">
-                        <!-- Agency Filter -->
-                        <select name="locationId" class="form-select form-select-sm" style="width: 200px; border-radius: 8px;">
-                            <option value="">— All Sub-accounts —</option>
-                            <% agencies.forEach(ag => { %>
-                                <option value="<%= ag.locationId %>" <%= locationId === ag.locationId ? 'selected' : '' %>><%= ag.agencyName %></option>
-                            <% }) %>
-                        </select>
+                        <!-- Search term -->
+                        <div class="input-group input-group-sm" style="width: 250px;">
+                            <span class="input-group-text bg-white border-end-0"><i class="ti ti-search text-muted"></i></span>
+                            <input type="text" name="search" class="form-control ps-0 border-start-0" placeholder="Search GCLID/Email..." value="<%= typeof search !== 'undefined' ? search : '' %>" style="border-radius: 0 8px 8px 0;">
+                        </div>
+
+                        <!-- Agency Filter (Only for superadmin) -->
+                        <% if (typeof user !== 'undefined' && user.role === 'superadmin') { %>
+                            <select name="locationId" class="form-select form-select-sm" style="width: 200px; border-radius: 8px;">
+                                <option value="">— All Sub-accounts —</option>
+                                <% agencies.forEach(ag => { %>
+                                    <option value="<%= ag.locationId %>" <%= locationId === ag.locationId ? 'selected' : '' %>><%= ag.agencyName %></option>
+                                <% }) %>
+                            </select>
+                        <% } %>
 
                         <!-- Days Filter -->
                         <select name="days" class="form-select form-select-sm" style="width: 140px; border-radius: 8px;">
@@ -29,7 +37,7 @@
                             <i class="ti ti-filter me-1"></i> Apply
                         </button>
                         
-                        <% if (locationId || (days && days !== 'all')) { %>
+                        <% if (locationId || (days && days !== 'all') || (typeof search !== 'undefined' && search)) { %>
                             <a href="/logs" class="btn btn-sm btn-light border px-2" title="Reset Filters" style="border-radius: 8px;">
                                 <i class="ti ti-rotate-clockwise"></i>
                             </a>
@@ -90,7 +98,7 @@
                         <nav aria-label="Page navigation">
                             <ul class="pagination pagination-sm mb-0">
                                 <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
-                                    <a class="page-link" href="/logs?page=<%= currentPage - 1 %>&locationId=<%= locationId %>&days=<%= days %>">
+                                    <a class="page-link" href="/logs?page=<%= currentPage - 1 %>&locationId=<%= locationId %>&days=<%= days %>&search=<%= typeof search !== 'undefined' ? search : '' %>">
                                         <i class="ti ti-chevron-left"></i>
                                     </a>
                                 </li>
@@ -103,12 +111,12 @@
 
                                 <% for(let i = startPage; i <= endPage; i++) { %>
                                     <li class="page-item <%= currentPage === i ? 'active' : '' %>">
-                                        <a class="page-link" href="/logs?page=<%= i %>&locationId=<%= locationId %>&days=<%= days %>"><%= i %></a>
+                                        <a class="page-link" href="/logs?page=<%= i %>&locationId=<%= locationId %>&days=<%= days %>&search=<%= typeof search !== 'undefined' ? search : '' %>"><%= i %></a>
                                     </li>
                                 <% } %>
 
                                 <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
-                                    <a class="page-link" href="/logs?page=<%= currentPage + 1 %>&locationId=<%= locationId %>&days=<%= days %>">
+                                    <a class="page-link" href="/logs?page=<%= currentPage + 1 %>&locationId=<%= locationId %>&days=<%= days %>&search=<%= typeof search !== 'undefined' ? search : '' %>">
                                         <i class="ti ti-chevron-right"></i>
                                     </a>
                                 </li>
