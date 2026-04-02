@@ -50,7 +50,7 @@ app.use(session({
     saveUninitialized: false,
     store,
     proxy: true,
-    cookie: { 
+    cookie: {
         maxAge: 1000 * 60 * 60 * 24, // 1 day
         secure: true,                // Must be true for SameSite=None
         sameSite: 'none'             // Required for third-party iframe cookies
