@@ -74,6 +74,7 @@ const agencyController = {
                 googleConnected,
                 recentLogs,
                 webhookLogs,
+                isGhlEmbedded: req.session.user?.isGhlEmbedded || false,
                 activePage: 'agencies',
                 layout: 'layouts/dashboard_layout'
             });

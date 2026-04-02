@@ -154,28 +154,37 @@
                     </div>
                     <div class="flex-grow-1">
                         <h6 class="mb-1 fw-semibold" style="color:#202124;">Connect GoHighLevel</h6>
-                        <p class="text-muted mb-3" style="font-size:13px;">
-                            Install the app in this sub-account. GHL will redirect back here with your access tokens.
-                        </p>
-                        <% if (ghlConnected) { %>
-                            <div class="d-flex align-items-center gap-3 flex-wrap">
-                                <span class="conn-pill conn-ok"><i class="ti ti-check"></i> App Installed</span>
-                                <span style="font-size:12px;color:#70757a;">
-                                    Token expires: <%= agency.ghlTokenExpiry ? new
-                                        Date(agency.ghlTokenExpiry).toLocaleString() : 'Unknown' %>
+                        <% if (ghlConnected && isGhlEmbedded) { %>
+                            <div class="d-flex align-items-center gap-2 mt-2">
+                                <span class="badge bg-success-subtle text-success px-3 py-2" style="font-size: 11px; border-radius: 6px; font-weight: 500;">
+                                    <i class="ti ti-circle-check-filled me-1"></i> App Integrated via Marketplace
                                 </span>
-                                <div class="btn-group">
-                                    <a href="/auth/install" target="_top" class="btn btn-sm btn-outline-secondary">Re-install</a>
-                                    <button class="btn btn-sm btn-outline-danger"
-                                        onclick="disconnectGHL()">Disconnect</button>
-                                </div>
+                                <button class="btn btn-sm btn-link text-danger p-0 text-decoration-none" style="font-size: 11px; font-weight: 600;" onclick="disconnectGHL()">Disconnect</button>
                             </div>
+                        <% } else { %>
+                            <p class="text-muted mb-3" style="font-size:13px;">
+                                Install the app in this sub-account. GHL will redirect back here with your access tokens.
+                            </p>
+                            <% if (ghlConnected) { %>
+                                <div class="d-flex align-items-center gap-3 flex-wrap">
+                                    <span class="conn-pill conn-ok"><i class="ti ti-check"></i> App Installed</span>
+                                    <span style="font-size:12px;color:#70757a;">
+                                        Token expires: <%= agency.ghlTokenExpiry ? new
+                                            Date(agency.ghlTokenExpiry).toLocaleString() : 'Unknown' %>
+                                    </span>
+                                    <div class="btn-group">
+                                        <a href="/auth/install" target="_top" class="btn btn-sm btn-outline-secondary">Re-install</a>
+                                        <button class="btn btn-sm btn-outline-danger"
+                                            onclick="disconnectGHL()">Disconnect</button>
+                                    </div>
+                                </div>
                             <% } else { %>
                                 <a href="/auth/install" id="btn-ghl-install" target="_top"
                                     class="btn btn-primary d-inline-flex align-items-center gap-2">
                                     <i class="ti ti-brand-hipchat"></i> Connect with GoHighLevel
                                 </a>
-                                <% } %>
+                            <% } %>
+                        <% } %>
                     </div>
                 </div>
             </div>
