@@ -217,6 +217,31 @@ const agencyController = {
         } catch (error) {
             res.status(500).json({ success: false, error: error.message });
         }
+    },
+
+    ghlExtension: async (req, res) => {
+        try {
+            const locationId = req.query.location_id || req.query.locationId; 
+            if (!locationId) {
+                return res.status(400).send('<h2>Error: Missing Location ID</h2><p>This page must be opened within GoHighLevel.</p>');
+            }
+            let agency = await Agency.findOne({ locationId });
+            if (!agency) {
+                agency = { locationId, agencyName: 'New Sub-account' };
+            }
+            const ghlConnected = !!(agency.ghlAccessToken);
+            const googleConnected = !!(agency.googleRefreshToken);
+            res.render('ghl-extension', {
+                title: 'Authentication Settings',
+                agency,
+                ghlConnected,
+                googleConnected,
+                layout: false
+            });
+        } catch (error) {
+            console.error('[GHL Extension] Error:', error);
+            res.status(500).send('Internal Server Error');
+        }
     }
 };
 

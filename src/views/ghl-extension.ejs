@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <!-- Tabler Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #1a73e8;
+            --success-color: #1e8e3e;
+            --danger-color: #c5221f;
+            --text-main: #202124;
+            --text-muted: #5f6368;
+            --bg-light: #f8f9fa;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            margin: 0;
+            padding: 24px;
+            background: #ffffff;
+            color: var(--text-main);
+            overflow-x: hidden;
+        }
+
+        .auth-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            margin-bottom: 32px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0 0 4px;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .auth-card {
+            border: 1px solid #dadce0;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            background: #fff;
+            transition: box-shadow 0.2s;
+        }
+
+        .auth-card:hover {
+            box-shadow: 0 1px 6px rgba(32, 33, 36, 0.1);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .status-connected {
+            background: #e6f4ea;
+            color: var(--success-color);
+        }
+
+        .status-disconnected {
+            background: #fce8e6;
+            color: var(--danger-color);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1557b0;
+        }
+
+        .btn-secondary {
+            background: #fff;
+            border: 1px solid #dadce0;
+            color: var(--text-main);
+        }
+
+        .btn-secondary:hover {
+            background: #f1f3f4;
+        }
+
+        .icon-box {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            background: var(--bg-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: var(--primary-color);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .setup-steps {
+            margin-top: 40px;
+            background: #fdfdfd;
+            border: 1px dashed #dadce0;
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .setup-steps h3 {
+            margin-top: 0;
+            font-size: 16px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        ol {
+            padding-left: 20px;
+            font-size: 14px;
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+        
+        ol li {
+            margin-bottom: 8px;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #e8f0fe;
+            color: #1967d2;
+            border: 1px solid #d2e3fc;
+        }
+    </style>
+</head>
+<body>
+
+<div class="auth-container">
+    <div class="header">
+        <h1>Authentication Settings</h1>
+        <p>Manage connections for your sub-account: <strong><%= agency.locationId %></strong></p>
+    </div>
+
+    <!-- GoHighLevel Connection -->
+    <div class="auth-card">
+        <div class="grid">
+            <div class="icon-box">
+                <i class="ti ti-brand-hipchat"></i>
+            </div>
+            <div>
+                <h3 style="margin:0 0 4px; font-size:16px;">GoHighLevel Integration</h3>
+                <p style="margin:0; font-size:13px; color:var(--text-muted);">
+                    App permissions and token sync for this location.
+                </p>
+            </div>
+            <div>
+                <% if (ghlConnected) { %>
+                    <div class="status-badge status-connected">
+                        <i class="ti ti-circle-check"></i> Connected
+                    </div>
+                <% } else { %>
+                    <div class="status-badge status-disconnected">
+                        <i class="ti ti-circle-x"></i> Not Connected
+                    </div>
+                <% } %>
+            </div>
+        </div>
+        <div style="margin-top:16px; display:flex; gap:12px;">
+            <a href="/auth/install" class="btn btn-primary">
+                <i class="ti ti-refresh"></i> <%= ghlConnected ? 'Reconnect App' : 'Connect GHL' %>
+            </a>
+            <% if (ghlConnected) { %>
+                <span style="font-size:11px; color:var(--text-muted); align-self:center;">
+                    Valid until: <%= agency.ghlTokenExpiry ? new Date(agency.ghlTokenExpiry).toLocaleDateString() : 'Unknown' %>
+                </span>
+            <% } %>
+        </div>
+    </div>
+
+    <!-- Google Ads Connection -->
+    <div class="auth-card">
+        <div class="grid">
+            <div class="icon-box" style="color: #4285F4;">
+                <i class="ti ti-brand-google"></i>
+            </div>
+            <div>
+                <h3 style="margin:0 0 4px; font-size:16px;">Google Ads Access</h3>
+                <p style="margin:0; font-size:13px; color:var(--text-muted);">
+                    Connect your Google Cloud app to sync conversion data.
+                </p>
+            </div>
+            <div>
+                <% if (googleConnected) { %>
+                    <div class="status-badge status-connected">
+                        <i class="ti ti-circle-check"></i> Authorized
+                    </div>
+                <% } else { %>
+                    <div class="status-badge status-disconnected">
+                        <i class="ti ti-circle-x"></i> Pending Login
+                    </div>
+                <% } %>
+            </div>
+        </div>
+        <div style="margin-top:16px;">
+            <a href="/auth/google-login?locationId=<%= agency.locationId %>" class="btn btn-secondary">
+                <i class="ti ti-login"></i> <%= googleConnected ? 'Switch User' : 'Sign in with Google' %>
+            </a>
+        </div>
+    </div>
+
+    <!-- Quick Help -->
+    <% if (!ghlConnected || !googleConnected) { %>
+    <div class="setup-steps">
+        <h3>How to Setup:</h3>
+        <ol>
+            <li>Click <strong>"Connect GHL"</strong> to grant marketplace permissions to your account.</li>
+            <li>Click <strong>"Sign in with Google"</strong> and select the manager account (MCC) that holds your client ads accounts.</li>
+            <li>Once both show <span class="status-badge status-connected" style="font-size:11px; padding:2px 8px;">CONNECTED</span>, you are ready to map your conversions.</li>
+        </ol>
+    </div>
+    <% } else { %>
+        <div class="alert">
+            <i class="ti ti-info-circle"></i>
+            Connections are healthy! You can now map conversions in the main Dashboard.
+        </div>
+    <% } %>
+</div>
+
+</body>
+</html>

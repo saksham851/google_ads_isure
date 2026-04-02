@@ -1,5 +1,5 @@
 const ghlAuthService = require('../services/ghlAuth.service');
-const dotenv         = require('dotenv');
+const dotenv = require('dotenv');
 dotenv.config();
 const logger = require('../utils/logger');
 
@@ -9,11 +9,15 @@ const logger = require('../utils/logger');
  * The user selects which sub-account (location) to install the app in.
  */
 exports.install = (req, res) => {
-    const scopes     = 'locations.readonly contacts.readonly contacts.write';
+    // Exact scopes from your project
+    const scopes = 'contacts.readonly contacts.write objects/schema.readonly objects/schema.write objects/record.readonly objects/record.write locations/customFields.readonly locations/customFields.write locations.readonly';
     const redirectUri = process.env.GHL_REDIRECT_URI || 'http://localhost:3000/auth/callback';
-    const clientId   = process.env.GHL_CLIENT_ID;
+    const clientId = process.env.GHL_CLIENT_ID || '6981c39178b42f8b4e29f060-mnh0zlkv';
+    const versionId = '6981c39178b42f8b4e29f060'; // Hardcoded as per your working URL
 
-    const installUrl = `https://marketplace.gohighlevel.com/oauth/chooselocation?response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&client_id=${clientId}&scope=${encodeURIComponent(scopes)}`;
+    // Construct the URL EXACTLY as per your working example (using + for spaces in scopes)
+    const encodedScopes = scopes.split(' ').join('+');
+    const installUrl = `https://marketplace.gohighlevel.com/oauth/chooselocation?response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&client_id=${clientId}&scope=${encodedScopes}&version_id=${versionId}`;
 
     res.redirect(installUrl);
 };

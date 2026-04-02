@@ -1,31 +1,31 @@
-const express        = require('express');
-const cors           = require('cors');
-const helmet         = require('helmet');
-const morgan         = require('morgan');
-const dotenv         = require('dotenv');
-const path           = require('path');
-const session        = require('express-session');
-const ms             = require('connect-mongo');
-const MongoStore     = ms.default || ms;
-const flash          = require('connect-flash');
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const morgan = require('morgan');
+const dotenv = require('dotenv');
+const path = require('path');
+const session = require('express-session');
+const ms = require('connect-mongo');
+const MongoStore = ms.default || ms;
+const flash = require('connect-flash');
 const expressLayouts = require('express-ejs-layouts');
 
 dotenv.config();
 
 // ── Route imports ─────────────────────────────────────────────────────────────
-const authRoutes        = require('./routes/auth.routes');
-const userAuthRoutes    = require('./routes/userAuth.routes');
-const agencyRoutes      = require('./routes/agency.routes');
-const logRoutes         = require('./routes/log.routes');
-const webhookRoutes     = require('./routes/webhook.routes');
-const googleAdsRoutes   = require('./routes/googleAds.routes');
+const authRoutes = require('./routes/auth.routes');
+const userAuthRoutes = require('./routes/userAuth.routes');
+const agencyRoutes = require('./routes/agency.routes');
+const logRoutes = require('./routes/log.routes');
+const webhookRoutes = require('./routes/webhook.routes');
+const googleAdsRoutes = require('./routes/googleAds.routes');
 
 // ── Controller / Middleware imports ───────────────────────────────────────────
 const dashboardController = require('./controllers/dashboard.controller');
-const errorHandler        = require('./middlewares/errorHandler');
+const errorHandler = require('./middlewares/errorHandler');
 const { isAuthenticated } = require('./middlewares/auth.middleware');
-const connectDB           = require('./config/database');
-const logger              = require('./utils/logger');
+const connectDB = require('./config/database');
+const logger = require('./utils/logger');
 
 const app = express();
 
@@ -37,13 +37,13 @@ app.set('layout', 'layouts/auth_layout');
 
 // ── Session ───────────────────────────────────────────────────────────────────
 const store = MongoStore.create({
-    mongoUrl:       process.env.MONGODB_URI,
+    mongoUrl: process.env.MONGODB_URI,
     collectionName: 'sessions'
 });
 
 app.use(session({
-    secret:            process.env.SESSION_SECRET || 'secret-key-google-ads',
-    resave:            false,
+    secret: process.env.SESSION_SECRET || 'secret-key-google-ads',
+    resave: false,
     saveUninitialized: false,
     store,
     cookie: { maxAge: 1000 * 60 * 60 * 24 } // 1 day
@@ -53,16 +53,30 @@ app.use(flash());
 
 // ── Global view locals ────────────────────────────────────────────────────────
 app.use((req, res, next) => {
-    res.locals.error    = req.flash('error');
-    res.locals.success  = req.flash('success');
-    res.locals.user     = req.session.user || null;
+    res.locals.error = req.flash('error');
+    res.locals.success = req.flash('success');
+    res.locals.user = req.session.user || null;
     res.locals.activePage = '';
-    res.locals.baseUrl  = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+    res.locals.baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
     next();
 });
 
 // ── Security & Parsing ────────────────────────────────────────────────────────
-app.use(helmet({ contentSecurityPolicy: false }));
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://fonts.googleapis.com"],
+            fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdn.jsdelivr.net"],
+            imgSrc: ["'self'", "data:", "https://*"],
+            frameAncestors: ["'self'", "https://*.gohighlevel.com", "https://*.leadconnectorhq.com", "https://*.msgsndr.com"]
+        }
+    },
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: false,
+    frameguard: false
+}));
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -73,13 +87,13 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 // Public OAuth routes & Webhooks (no auth required)
-app.use('/auth',     authRoutes);
+app.use('/auth', authRoutes);
 app.use('/webhooks', webhookRoutes);
 
 // Authenticated app routes
-app.use('/user',     userAuthRoutes);
+app.use('/user', userAuthRoutes);
 app.use('/agencies', agencyRoutes);
-app.use('/',         logRoutes);
+app.use('/', logRoutes);
 
 // Google Ads JSON API (for frontend dropdowns)
 app.use('/google-ads', googleAdsRoutes);
