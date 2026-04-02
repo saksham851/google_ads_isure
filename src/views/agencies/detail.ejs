@@ -165,13 +165,13 @@
                                         Date(agency.ghlTokenExpiry).toLocaleString() : 'Unknown' %>
                                 </span>
                                 <div class="btn-group">
-                                    <a href="/auth/install" class="btn btn-sm btn-outline-secondary">Re-install</a>
+                                    <a href="/auth/install" target="_top" class="btn btn-sm btn-outline-secondary">Re-install</a>
                                     <button class="btn btn-sm btn-outline-danger"
                                         onclick="disconnectGHL()">Disconnect</button>
                                 </div>
                             </div>
                             <% } else { %>
-                                <a href="/auth/install" id="btn-ghl-install"
+                                <a href="/auth/install" id="btn-ghl-install" target="_top"
                                     class="btn btn-primary d-inline-flex align-items-center gap-2">
                                     <i class="ti ti-brand-hipchat"></i> Connect with GoHighLevel
                                 </a>
@@ -305,6 +305,7 @@
                                     </div>
                                 </div>
                                 <a href="/auth/google-login?locationId=<%= agency.locationId %>"
+                                    target="_top"
                                     class="btn btn-sm btn-primary d-flex align-items-center gap-1 px-3"
                                     style="border-radius:6px;">
                                     <i class="ti ti-brand-google"></i> Connect with Google
@@ -321,7 +322,7 @@
                                             Credentials saved! Now click below to authorize access.
                                         </div>
                                         <a href="/auth/google-login?locationId=<%= agency.locationId %>"
-                                            id="btn-google-login"
+                                            id="btn-google-login" target="_top"
                                             class="btn btn-primary d-inline-flex align-items-center gap-2 px-4 shadow-sm">
                                             <svg width="18" height="18" viewBox="0 0 48 48">
                                                 <path fill="#fff"
@@ -1099,9 +1100,24 @@
 
         function copyToClipboard(elementId) {
             const text = document.getElementById(elementId).innerText || document.getElementById(elementId).value;
-            navigator.clipboard.writeText(text).then(() => {
-                Swal.fire({ icon: 'success', title: 'Copied!', text: 'Text copied to clipboard.', timer: 1000, showConfirmButton: false });
-            });
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => {
+                    Swal.fire({ icon: 'success', title: 'Copied!', text: 'Text copied to clipboard.', timer: 1000, showConfirmButton: false });
+                });
+            } else {
+                // Fallback for iframes or non-secure contexts
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    Swal.fire({ icon: 'success', title: 'Copied!', text: 'Text copied to clipboard.', timer: 1000, showConfirmButton: false });
+                } catch (err) {
+                    console.error('Fallback copy failed', err);
+                }
+                document.body.removeChild(textArea);
+            }
         }
 
         async function saveMapping(btn) {

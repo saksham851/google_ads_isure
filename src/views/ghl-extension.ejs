@@ -210,7 +210,7 @@
             </div>
         </div>
         <div style="margin-top:16px; display:flex; gap:12px;">
-            <a href="/auth/install" class="btn btn-primary">
+            <a href="/auth/install" target="_top" class="btn btn-primary">
                 <i class="ti ti-refresh"></i> <%= ghlConnected ? 'Reconnect App' : 'Connect GHL' %>
             </a>
             <% if (ghlConnected) { %>
@@ -246,7 +246,7 @@
             </div>
         </div>
         <div style="margin-top:16px;">
-            <a href="/auth/google-login?locationId=<%= agency.locationId %>" class="btn btn-secondary">
+            <a href="/auth/google-login?locationId=<%= agency.locationId %>" target="_top" class="btn btn-secondary">
                 <i class="ti ti-login"></i> <%= googleConnected ? 'Switch User' : 'Sign in with Google' %>
             </a>
         </div>
