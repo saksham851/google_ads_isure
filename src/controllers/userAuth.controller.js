@@ -26,9 +26,12 @@ const userAuthController = {
     login: async (req, res) => {
         try {
             const { email, password } = req.body;
+            console.log(`[Auth] Attempting login for: ${email}`);
+            
             const user = await User.findOne({ email });
 
             if (!user || !(await user.comparePassword(password))) {
+                console.log(`[Auth] Failed login for: ${email}`);
                 req.flash('error', 'Invalid email or password');
                 return res.redirect('/user/login');
             }
@@ -39,9 +42,13 @@ const userAuthController = {
                 role: user.role
             };
 
-            res.redirect('/dashboard');
+            const redirectUrl = req.session.returnTo || '/dashboard';
+            delete req.session.returnTo;
+            
+            console.log(`[Auth] Successful login: ${email}. Redirecting to: ${redirectUrl}`);
+            res.redirect(redirectUrl);
         } catch (error) {
-            console.error('Login error:', error);
+            console.error('[Auth] Login error:', error);
             req.flash('error', 'Something went wrong');
             res.redirect('/user/login');
         }

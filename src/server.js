@@ -41,12 +41,20 @@ const store = MongoStore.create({
     collectionName: 'sessions'
 });
 
+// Trust proxy for secure cookies (mandatory on Vercel/proxies)
+app.set('trust proxy', 1);
+
 app.use(session({
     secret: process.env.SESSION_SECRET || 'secret-key-google-ads',
     resave: false,
     saveUninitialized: false,
     store,
-    cookie: { maxAge: 1000 * 60 * 60 * 24 } // 1 day
+    proxy: true,
+    cookie: { 
+        maxAge: 1000 * 60 * 60 * 24, // 1 day
+        secure: true,                // Must be true for SameSite=None
+        sameSite: 'none'             // Required for third-party iframe cookies
+    }
 }));
 
 app.use(flash());
