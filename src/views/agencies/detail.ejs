@@ -805,6 +805,21 @@
     <% } %>
 });
 
+        // Helper for handling fetch responses (especially for 401 Session Expiry)
+        async function handleResponse(res) {
+            if (res.status === 401) {
+                const result = await Swal.fire({
+                    title: 'Session Expired',
+                    text: 'Your session has expired inside GHL. Please refresh the page to continue.',
+                    icon: 'warning',
+                    confirmButtonText: 'Refresh Now'
+                });
+                if (result.isConfirmed) location.reload();
+                throw new Error('Session Expired');
+            }
+            return res;
+        }
+
         async function loadManagerAccounts(btn) {
             const sel = document.getElementById('mcc-select');
 
@@ -817,7 +832,8 @@
             if (btn) btn.disabled = true;
             sel.innerHTML = '<option value="">Loading...</option>';
             try {
-                const r = await fetch(`/google-ads/manager-accounts?locationId=${locationId}`);
+                let r = await fetch(`/google-ads/manager-accounts?locationId=${locationId}`);
+                r = await handleResponse(r);
                 let data;
                 try { data = await r.json(); } catch (e) { data = { error: 'Unknown server error' }; }
 
@@ -872,7 +888,8 @@
             custSel.disabled = false;
 
             try {
-                const r = await fetch(`/google-ads/client-accounts?locationId=${locationId}&mccId=${mccId}`);
+                let r = await fetch(`/google-ads/client-accounts?locationId=${locationId}&mccId=${mccId}`);
+                r = await handleResponse(r);
                 const data = await r.json();
                 if (!data.success) throw new Error(data.error);
 
@@ -907,7 +924,8 @@
             addBtn.innerHTML = '<i class="ti ti-loader-2 me-1"></i> Loading actions...';
 
             try {
-                const r = await fetch(`/google-ads/conversion-actions?locationId=${locationId}&customerId=${custId}&mccId=${mccId}`);
+                let r = await fetch(`/google-ads/conversion-actions?locationId=${locationId}&customerId=${custId}&mccId=${mccId}`);
+                r = await handleResponse(r);
                 const data = await r.json();
                 if (!data.success) throw new Error(data.error);
 
@@ -1018,11 +1036,12 @@
             if (statusDiv) statusDiv.innerHTML = `<i class="ti ti-loader-2 me-1"></i> ${isClear ? 'Clearing...' : 'Saving...'}`;
 
             try {
-                const r = await fetch('/google-ads/save-credentials', {
+                let r = await fetch('/google-ads/save-credentials', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
+                r = await handleResponse(r);
                 const data = await r.json();
                 if (!data.success) throw new Error(data.error);
 
@@ -1151,11 +1170,12 @@
             statusDiv.innerHTML = '<i class="ti ti-loader-2 me-1"></i> Saving...';
 
             try {
-                const r = await fetch('/google-ads/save-mapping', {
+                let r = await fetch('/google-ads/save-mapping', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ locationId, mccId, mccName, customerId, customerName: custName, conversionMappings: mappings })
                 });
+                r = await handleResponse(r);
                 const data = await r.json();
                 if (!data.success) throw new Error(data.error);
 
@@ -1219,11 +1239,12 @@
             btn.innerHTML = '<i class="ti ti-loader-2 me-1"></i> Adding...';
 
             try {
-                const r = await fetch(`/agencies/${LOCATION_ID_FOR_WH}/webhooks`, {
+                let r = await fetch(`/agencies/${LOCATION_ID_FOR_WH}/webhooks`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name })
                 });
+                r = await handleResponse(r);
                 const data = await r.json();
                 if (!data.success) throw new Error(data.error);
 
@@ -1297,7 +1318,8 @@
 
             btn.disabled = true;
             try {
-                const r = await fetch(`/agencies/${locationId}/webhooks/${slug}`, { method: 'DELETE' });
+                let r = await fetch(`/agencies/${locationId}/webhooks/${slug}`, { method: 'DELETE' });
+                r = await handleResponse(r);
                 const data = await r.json();
                 if (!data.success) throw new Error(data.error);
                 const row = document.querySelector(`.webhook-row[data-slug="${slug}"]`);
@@ -1331,7 +1353,8 @@
                 if (result.isConfirmed) {
                     if (btn) btn.disabled = true;
                     try {
-                        const r = await fetch(`/agencies/${locationId}/disconnect-ghl`, { method: 'POST' });
+                        let r = await fetch(`/agencies/${locationId}/disconnect-ghl`, { method: 'POST' });
+                        r = await handleResponse(r);
                         const d = await r.json();
                         if (d.success) location.reload();
                         else throw new Error(d.error);
@@ -1355,7 +1378,8 @@
                 if (result.isConfirmed) {
                     if (btn) btn.disabled = true;
                     try {
-                        const r = await fetch(`/agencies/${locationId}`, { method: 'DELETE' });
+                        let r = await fetch(`/agencies/${locationId}`, { method: 'DELETE' });
+                        r = await handleResponse(r);
                         const d = await r.json();
                         if (d.success) window.location.href = '/agencies';
                         else throw new Error(d.error);
@@ -1389,11 +1413,12 @@
             }
 
             try {
-                const r = await fetch(`/agencies/${locationId}/webhooks/${slug}/mapping`, {
+                let r = await fetch(`/agencies/${locationId}/webhooks/${slug}/mapping`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ mappingId })
                 });
+                r = await handleResponse(r);
                 const d = await r.json();
                 if (!d.success) throw new Error(d.error);
 

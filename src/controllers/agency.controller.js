@@ -225,15 +225,36 @@ const agencyController = {
             if (!locationId) {
                 return res.status(400).send('<h2>Error: Missing Location ID</h2><p>This page must be opened within GoHighLevel.</p>');
             }
-            let agency = await Agency.findOne({ locationId });
-            if (!agency) {
-                agency = { locationId, agencyName: 'New Sub-account' };
+
+            // ── AUTO-SESSION FOR GHL ───────────────────────────────────────────
+            // When opening from GHL, we can trust the location_id (for MVP/Dev)
+            // or use Signed User Context for production.
+            // This ensures buttons in detail.ejs will work without needing a manual login.
+            if (!req.session.user) {
+                req.session.user = { 
+                    locationId: locationId, 
+                    role: 'ghl_user',
+                    isGhlEmbedded: true 
+                };
             }
-            const ghlConnected = !!(agency.ghlAccessToken);
-            const googleConnected = !!(agency.googleRefreshToken);
+
+            let agency = await Agency.findOne({ locationId });
+            
+            // If the agency exists and is fully connected, we can redirect to detail page
+            // Otherwise show the setup screen (ghl-extension.ejs)
+            const ghlConnected = !!(agency?.ghlAccessToken);
+            const googleConnected = !!(agency?.googleRefreshToken);
+
+            if (ghlConnected && googleConnected && agency) {
+                // If everything is ready, show them the full dashboard (detail view)
+                // but we use the detail template logic
+                return res.redirect(`/agencies/${locationId}/detail`);
+            }
+
+            // Otherwise, show the basic extension/onboarding screen
             res.render('ghl-extension', {
                 title: 'Authentication Settings',
-                agency,
+                agency: agency || { locationId, agencyName: 'New Sub-account' },
                 ghlConnected,
                 googleConnected,
                 layout: false
