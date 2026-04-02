@@ -228,15 +228,15 @@ const agencyController = {
             }
 
             // ── AUTO-SESSION FOR GHL ───────────────────────────────────────────
-            // When opening from GHL, we can trust the location_id (for MVP/Dev)
-            // or use Signed User Context for production.
-            // This ensures buttons in detail.ejs will work without needing a manual login.
             if (!req.session.user) {
                 req.session.user = { 
                     locationId: locationId, 
                     role: 'ghl_user',
                     isGhlEmbedded: true 
                 };
+            } else {
+                // If user already has a session, ensure this flag is set
+                req.session.user.isGhlEmbedded = true;
             }
 
             let agency = await Agency.findOne({ locationId });
