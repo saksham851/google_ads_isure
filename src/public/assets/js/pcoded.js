@@ -7,7 +7,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // remove pre-loader start
   setTimeout(function () {
-    document.querySelector('.loader-bg').remove();
+    var loader = document.querySelector('.loader-bg');
+    if (loader) loader.remove();
   }, 400);
 
   // remove pre-loader end
@@ -239,10 +240,11 @@ function rm_menu() {
     document.querySelector('.topbar').classList.remove('mob-sidebar-active');
   }
 
-  document.querySelector('.pc-sidebar .pc-menu-overlay').remove();
-  if (document.querySelector('.topbar .pc-menu-overlay')) {
-    document.querySelector('.topbar .pc-menu-overlay').remove();
-  }
+  var sidebarOverlay = document.querySelector('.pc-sidebar .pc-menu-overlay');
+  if (sidebarOverlay) sidebarOverlay.remove();
+  
+  var topbarOverlay = document.querySelector('.topbar .pc-menu-overlay');
+  if (topbarOverlay) topbarOverlay.remove();
 }
 
 // remove overlay
@@ -251,8 +253,11 @@ function remove_overlay_menu() {
   if (document.querySelector('.topbar')) {
     document.querySelector('.topbar').classList.remove('mob-sidebar-active');
   }
-  document.querySelector('.pc-sidebar .pc-menu-overlay').remove();
-  document.querySelector('.topbar .pc-menu-overlay').remove();
+  var sidebarOverlay = document.querySelector('.pc-sidebar .pc-menu-overlay');
+  if (sidebarOverlay) sidebarOverlay.remove();
+
+  var topbarOverlay = document.querySelector('.topbar .pc-menu-overlay');
+  if (topbarOverlay) topbarOverlay.remove();
 }
 
 window.addEventListener('load', function () {
