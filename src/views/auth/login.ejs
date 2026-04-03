@@ -17,6 +17,7 @@
     <% } %>
     
     <form method="POST" action="/user/login" id="loginForm">
+        <input type="hidden" name="locationId" value="<%= typeof locationId !== 'undefined' ? locationId : '' %>">
         <div class="form-group mb-3">
           <label class="form-label">Email Address</label>
           <input type="email" name="email" class="form-control" id="email" placeholder="Email Address" required>

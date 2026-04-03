@@ -18,8 +18,14 @@ const createTransport = () => {
 const userAuthController = {
     // GET /login
     loginView: (req, res) => {
-        if (req.session.user) return res.redirect('/dashboard');
-        res.render('auth/login', { error: req.flash('error'), success: req.flash('success'), title: 'Login' });
+        const locationId = req.query.locationId || req.query.location_id;
+        if (req.session.user) return res.redirect(`/dashboard${locationId ? '?locationId=' + locationId : ''}`);
+        res.render('auth/login', { 
+            error: req.flash('error'), 
+            success: req.flash('success'), 
+            title: 'Login',
+            locationId: locationId
+        });
     },
 
     // POST /login
@@ -44,15 +50,17 @@ const userAuthController = {
                 locationId: user.locationId
             };
 
-            const redirectUrl = req.session.returnTo || '/dashboard';
+            const locationId = req.body.locationId;
+            const redirectUrl = req.session.returnTo || `/dashboard${locationId ? '?locationId=' + locationId : ''}`;
             delete req.session.returnTo;
             
             console.log(`[Auth] Successful login: ${email}. Redirecting to: ${redirectUrl}`);
             res.redirect(redirectUrl);
         } catch (error) {
             console.error('[Auth] Login error:', error);
+            const locationId = req.body.locationId;
             req.flash('error', 'Something went wrong');
-            res.redirect('/user/login');
+            res.redirect(`/user/login${locationId ? '?locationId=' + locationId : ''}`);
         }
     },
 
