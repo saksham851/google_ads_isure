@@ -15,7 +15,7 @@ const dashboardController = {
             let webhookFilter = {};
 
             if (user.role !== 'superadmin') {
-                const activeLocationId = req.session.activeLocationId;
+                const activeLocationId = req.query.locationId || req.query.location_id || req.session.activeLocationId;
 
                 if (activeLocationId) {
                     // Filter specifically for the active GHL sub-account (Marketplace app inside location)

@@ -22,7 +22,7 @@ const logController = {
                 else agenciesQuery = { locationId: 'none' };
             }
 
-            const activeLocationId = req.query.locationId || req.session.activeLocationId;
+            const activeLocationId = req.query.locationId || req.query.location_id || req.session.activeLocationId;
 
             if (search) {
                 // To search by lead email, we might need a join or search by gclid/status
@@ -103,7 +103,7 @@ const logController = {
                 else agenciesQuery = { locationId: 'none' };
             }
 
-            const activeLocationId = req.query.locationId || req.session.activeLocationId;
+            const activeLocationId = req.query.locationId || req.query.location_id || req.session.activeLocationId;
 
             if (search) {
                 filter.$or = [

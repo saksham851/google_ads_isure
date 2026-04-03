@@ -23,7 +23,7 @@
 
                 <li
                     class="pc-item <%= typeof activePage !== 'undefined' && activePage === 'dashboard' ? 'active' : '' %>">
-                    <a href="/dashboard" class="pc-link">
+                    <a href="/dashboard<%= activeLocationId ? '?locationId=' + activeLocationId : '' %>" class="pc-link">
                         <span class="pc-micon"><i class="ti ti-dashboard"></i></span>
                         <span class="pc-mtext">Dashboard</span>
                     </a>
@@ -37,7 +37,7 @@
 
                 <li
                     class="pc-item <%= typeof activePage !== 'undefined' && activePage === 'agencies' ? 'active' : '' %>">
-                    <a href="/agencies" class="pc-link">
+                    <a href="/agencies<%= activeLocationId ? '?locationId=' + activeLocationId : '' %>" class="pc-link">
                         <span class="pc-micon"><i class="ti ti-building"></i></span>
                         <span class="pc-mtext">Sub-Accounts</span>
                     </a>
@@ -50,7 +50,7 @@
                 </li>
 
                 <li class="pc-item <%= typeof activePage !== 'undefined' && activePage === 'logs' ? 'active' : '' %>">
-                    <a href="/logs" class="pc-link">
+                    <a href="/logs<%= activeLocationId ? '?locationId=' + activeLocationId : '' %>" class="pc-link">
                         <span class="pc-micon"><i class="ti ti-file-text"></i></span>
                         <span class="pc-mtext">Conversion Logs</span>
                     </a>
@@ -58,7 +58,7 @@
 
                 <li
                     class="pc-item <%= typeof activePage !== 'undefined' && activePage === 'webhooks' ? 'active' : '' %>">
-                    <a href="/webhooks-logs" class="pc-link">
+                    <a href="/webhooks-logs<%= activeLocationId ? '?locationId=' + activeLocationId : '' %>" class="pc-link">
                         <span class="pc-micon"><i class="ti ti-plug"></i></span>
                         <span class="pc-mtext">Webhook Logs</span>
                     </a>

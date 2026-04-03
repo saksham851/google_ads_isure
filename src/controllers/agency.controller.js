@@ -17,7 +17,7 @@ const agencyController = {
             const user = req.session.user;
             let filter = {};
             if (user.role !== 'superadmin') {
-                const activeLocationId = req.session.activeLocationId;
+                const activeLocationId = req.query.locationId || req.query.location_id || req.session.activeLocationId;
                 if (activeLocationId) {
                     filter = { locationId: activeLocationId };
                 } else if (user.agencyId) {
