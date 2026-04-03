@@ -54,8 +54,8 @@ app.use(session({
     proxy: true,
     cookie: {
         maxAge: 1000 * 60 * 60 * 24, // 1 day
-        secure: isProduction,                // Must be true for SameSite=None
-        sameSite: isProduction ? 'none' : 'lax' // Required for third-party iframe cookies
+        secure: true,                // Must be true for SameSite=None
+        sameSite: 'none'             // Required for third-party iframe cookies
     }
 }));
 
