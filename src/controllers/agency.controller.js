@@ -17,7 +17,10 @@ const agencyController = {
             const user = req.session.user;
             let filter = {};
             if (user.role !== 'superadmin') {
-                if (user.agencyId) {
+                const activeLocationId = req.session.activeLocationId;
+                if (activeLocationId) {
+                    filter = { locationId: activeLocationId };
+                } else if (user.agencyId) {
                     filter = { agencyId: user.agencyId };
                 } else if (user.locationId) {
                     filter = { locationId: user.locationId };
@@ -246,6 +249,8 @@ const agencyController = {
             }
 
             // ── AUTO-SESSION FOR GHL ───────────────────────────────────────────
+            if (locationId) req.session.activeLocationId = locationId;
+
             if (!req.session.user) {
                 req.session.user = { 
                     locationId: locationId, 

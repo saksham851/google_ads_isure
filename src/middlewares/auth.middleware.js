@@ -1,4 +1,11 @@
 const isAuthenticated = (req, res, next) => {
+    // 0. Capture locationId from GHL if present in query
+    // GHL Custom Page Links usually append location_id (snake_case) or locationId
+    const locationId = req.query.location_id || req.query.locationId;
+    if (locationId) {
+        req.session.activeLocationId = locationId;
+    }
+
     // 1. Check if user is authenticated
     if (req.session && req.session.user) return next();
     
