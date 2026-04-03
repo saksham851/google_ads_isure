@@ -48,7 +48,7 @@ const isProduction = process.env.NODE_ENV === 'production' || (process.env.BASE_
 
 app.use(session({
     secret: process.env.SESSION_SECRET || 'secret-key-google-ads',
-    resave: false,
+    resave: true,
     saveUninitialized: false,
     store,
     proxy: true,

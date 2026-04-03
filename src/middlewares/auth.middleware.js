@@ -4,7 +4,8 @@ const isAuthenticated = (req, res, next) => {
 
     // Fallback: Extract from Referer header (GHL uses /location/ID/ in its URLs)
     if (!locationId && req.headers.referer) {
-        const match = req.headers.referer.match(/\/location\/([^\/]+)/);
+        // Robust regex to find location ID after /location/ in any GHL-based app URL
+        const match = req.headers.referer.match(/location\/([a-zA-Z0-9]{10,})/);
         if (match) locationId = match[1];
     }
 
