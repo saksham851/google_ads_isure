@@ -17,12 +17,16 @@ const agencyController = {
             const user = req.session.user;
             let filter = {};
 
-            // Even for superadmin, if they are viewing via GHL (locationId present), we ONLY show that sub-account.
-            const activeLocationId = req.query.locationId || req.query.location_id || req.session.activeLocationId;
+            // For the agencies list page (/agencies), superadmins should see EVERYTHING.
+            // Only non-superadmins or specific query-based filters should apply isolation on this page.
+            const isSuperAdmin = user.role === 'superadmin';
+            const activeLocationId = (req.query.locationId || req.query.location_id || req.session.activeLocationId);
             
-            if (activeLocationId) {
+            if (!isSuperAdmin && activeLocationId) {
+                // Not superadmin but in GHL context -> Show only current
                 filter = { locationId: activeLocationId };
-            } else if (user.role !== 'superadmin') {
+            } else if (!isSuperAdmin) {
+                // Not superadmin, not in GHL -> Show assigned locations
                 if (user.agencyId) {
                     filter = { agencyId: user.agencyId };
                 } else if (user.locationId) {
@@ -30,7 +34,11 @@ const agencyController = {
                 } else {
                     filter = { locationId: 'none' };
                 }
+            } else if (req.query.locationId || req.query.location_id) {
+                // Superadmin manually filtering by URL param
+                filter = { locationId: req.query.locationId || req.query.location_id };
             }
+            // else: superadmin with no explicit filter -> filter = {} -> see all!
 
             if (search) {
                 filter.agencyName = { $regex: search, $options: 'i' };
