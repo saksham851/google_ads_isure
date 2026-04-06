@@ -12,8 +12,8 @@ exports.install = (req, res) => {
     // Exact scopes from your project
     const scopes = 'contacts.readonly contacts.write objects/schema.readonly objects/schema.write objects/record.readonly objects/record.write locations/customFields.readonly locations/customFields.write locations.readonly';
     const redirectUri = process.env.GHL_REDIRECT_URI || 'http://localhost:3000/auth/callback';
-    const clientId = process.env.GHL_CLIENT_ID || '6981c39178b42f8b4e29f060-mnh0zlkv';
-    const versionId = '6981c39178b42f8b4e29f060'; // Hardcoded as per your working URL
+    const clientId = process.env.GHL_CLIENT_ID || '69aad8e0fabd7b425927d40c-mnh0zlkv';
+    const versionId = clientId.split('-')[0]; // Dynamically derive versionId from clientId
 
     // Construct the URL EXACTLY as per your working example (using + for spaces in scopes)
     const encodedScopes = scopes.split(' ').join('+');
