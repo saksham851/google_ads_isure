@@ -1,23 +1,31 @@
 const isAuthenticated = (req, res, next) => {
-    // 0. Capture locationId from GHL if present in query or referer
+    // Detect from Query
     let queryLocationId = req.query.location_id || req.query.locationId;
+    
+    // Detect from Referer (Parent GHL Page)
     let refererLocationId = null;
-
-    // Extract from Referer header (GHL uses /location/ID/ in its URLs)
-    if (req.headers.referer) {
-        const match = req.headers.referer.match(/location\/([a-zA-Z0-9]{10,})/);
-        if (match) refererLocationId = match[1];
+    const referer = req.headers.referer || '';
+    if (referer) {
+        // Broaden regex to find any 10+ char alphanumeric string following /location/ or /locationId/
+        const match = referer.match(/location[Id]*\/([a-zA-Z0-9]+)/i);
+        if (match && match[1]) {
+            refererLocationId = match[1];
+        }
     }
 
-    // Determine target locationId: Prioritize Query > Referer > Session
-    let targetLocationId = queryLocationId || refererLocationId;
+    // Determine target: Query wins, then Referer
+    let detectedId = queryLocationId || refererLocationId;
 
-    if (targetLocationId) {
-        // Switch session if we found a new locationId in query or referer
-        req.session.activeLocationId = targetLocationId;
-        req.query.locationId = targetLocationId;
+    if (detectedId) {
+        // If detected ID is different from session, switch context
+        if (req.session.activeLocationId !== detectedId) {
+            req.session.activeLocationId = detectedId;
+            req.query.locationId = detectedId; 
+        } else {
+            req.query.locationId = detectedId;
+        }
     } else if (req.session.activeLocationId) {
-        // Keep existing session if no new context found
+        // Fallback to session
         req.query.locationId = req.session.activeLocationId;
     }
 
