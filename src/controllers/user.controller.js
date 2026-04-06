@@ -21,12 +21,16 @@ const userController = {
                 User.countDocuments(filter)
             ]);
 
-            // For each user, count their agencies (optional optimization)
+            // For each user, count their agencies
             const usersWithStats = await Promise.all(users.map(async (u) => {
                 let agencyFilter = {};
-                if (u.locationId) agencyFilter = { locationId: u.locationId };
-                else if (u.agencyId) agencyFilter = { agencyId: u.agencyId };
-                else return { ...u._doc, agencyCount: 0, agencyNames: 'None' };
+                if (u.locationIds && u.locationIds.length > 0) {
+                    agencyFilter = { locationId: { $in: u.locationIds } };
+                } else if (u.agencyId) {
+                    agencyFilter = { agencyId: u.agencyId };
+                } else {
+                    return { ...u._doc, agencyCount: 0, agencyNames: 'None', agencyListData: [] };
+                }
 
                 const userAgencies = await Agency.find(agencyFilter).select('subAccountName locationId');
                 const agencyListData = userAgencies.map(a => ({ name: a.subAccountName, locationId: a.locationId }));
@@ -57,9 +61,13 @@ const userController = {
 
             // Find agencies linked to this user
             let agencyFilter = {};
-            if (user.locationId) agencyFilter = { locationId: user.locationId };
-            else if (user.agencyId) agencyFilter = { agencyId: user.agencyId };
-            else agencyFilter = { _id: null };
+            if (user.locationIds && user.locationIds.length > 0) {
+                agencyFilter = { locationId: { $in: user.locationIds } };
+            } else if (user.agencyId) {
+                agencyFilter = { agencyId: user.agencyId };
+            } else {
+                agencyFilter = { _id: null };
+            }
 
             const agencies = await Agency.find(agencyFilter);
             const agencyObjectIds = agencies.map(a => a._id);

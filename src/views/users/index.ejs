@@ -62,7 +62,7 @@
                                                 <% if (u.agencyListData && u.agencyListData.length > 0) { %>
                                                     <% u.agencyListData.slice(0, 3).forEach(item => { %>
                                                         <a href="/logs?locationId=<%= item.locationId %>" class="account-chip">
-                                                            <%= item.name %>
+                                                            <%= item.name %> <span style="font-size: 8.5px; opacity: 0.6; font-weight: normal;">(<%= item.locationId %>)</span>
                                                         </a>
                                                     <% }) %>
                                                     <% if (u.agencyListData.length > 3) { %>

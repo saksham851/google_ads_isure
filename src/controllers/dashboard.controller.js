@@ -38,16 +38,13 @@ const dashboardController = {
                         agencyFilter = { locationId: { $in: locationIds } };
                         webhookFilter = { locationId: { $in: locationIds } };
                         logsFilter = { agencyId: { $in: agencyObjectIds } };
-                    } else if (user.locationId) {
-                        agencyFilter = { locationId: user.locationId };
-                        webhookFilter = { locationId: user.locationId };
+                    } else if (user.locationIds && user.locationIds.length > 0) {
+                        agencyFilter = { locationId: { $in: user.locationIds } };
+                        webhookFilter = { locationId: { $in: user.locationIds } };
 
-                        const agency = await Agency.findOne({ locationId: user.locationId });
-                        if (agency) {
-                            logsFilter = { agencyId: agency._id };
-                        } else {
-                            logsFilter = { agencyId: null };
-                        }
+                        const agencies = await Agency.find({ locationId: { $in: user.locationIds } });
+                        const agencyObjectIds = agencies.map(a => a._id);
+                        logsFilter = { agencyId: { $in: agencyObjectIds } };
                     } else {
                         // Fallback if neither exists
                         agencyFilter = { locationId: null };

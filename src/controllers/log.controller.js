@@ -24,7 +24,7 @@ const logController = {
                 agenciesQuery = { locationId: activeLocationId };
             } else if (!isSuperAdmin) {
                 if (user.agencyId) agenciesQuery = { agencyId: user.agencyId };
-                else if (user.locationId) agenciesQuery = { locationId: user.locationId };
+                else if (user.locationIds && user.locationIds.length > 0) agenciesQuery = { locationId: { $in: user.locationIds } };
                 else agenciesQuery = { locationId: 'none' };
             }
 
@@ -57,7 +57,7 @@ const logController = {
                 const targetUser = await User.findById(req.query.userId);
                 if (targetUser) {
                     let targetAgenciesQuery = {};
-                    if (targetUser.locationId) targetAgenciesQuery = { locationId: targetUser.locationId };
+                    if (targetUser.locationIds && targetUser.locationIds.length > 0) targetAgenciesQuery = { locationId: { $in: targetUser.locationIds } };
                     else if (targetUser.agencyId) targetAgenciesQuery = { agencyId: targetUser.agencyId };
                     else targetAgenciesQuery = { _id: null };
 
@@ -125,7 +125,7 @@ const logController = {
                 agenciesQuery = { locationId: activeLocationId };
             } else if (!isSuperAdmin) {
                 if (user.agencyId) agenciesQuery = { agencyId: user.agencyId };
-                else if (user.locationId) agenciesQuery = { locationId: user.locationId };
+                else if (user.locationIds && user.locationIds.length > 0) agenciesQuery = { locationId: { $in: user.locationIds } };
                 else agenciesQuery = { locationId: 'none' };
             }
 
@@ -189,7 +189,7 @@ const logController = {
                 const targetUser = await User.findById(req.query.userId);
                 if (targetUser) {
                     let targetAgenciesQuery = {};
-                    if (targetUser.locationId) targetAgenciesQuery = { locationId: targetUser.locationId };
+                    if (targetUser.locationIds && targetUser.locationIds.length > 0) targetAgenciesQuery = { locationId: { $in: targetUser.locationIds } };
                     else if (targetUser.agencyId) targetAgenciesQuery = { agencyId: targetUser.agencyId };
                     else targetAgenciesQuery = { _id: 'none' };
 

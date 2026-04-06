@@ -20,8 +20,9 @@ const userSchema = new mongoose.Schema({
         enum: ['superadmin', 'user'],
         default: 'user'
     },
-    agencyId: String,  // Link to GHL Agency ID
-    locationId: String // Link to GHL Location ID (for 'user' role)
+    ghlUserId: String,  // Link to GHL User ID
+    agencyId: String,   // Link to GHL Agency ID (for 'agencyadmin' type users)
+    locationIds: [String] // Array of GHL Location IDs this user has installed the app in/has access to
 } , { timestamps: true });
 
 // Hash password before saving

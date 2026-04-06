@@ -47,7 +47,7 @@ const userAuthController = {
                 email: user.email,
                 role: user.role,
                 agencyId: user.agencyId,
-                locationId: user.locationId
+                locationIds: user.locationIds || []
             };
 
             const locationId = req.body.locationId;

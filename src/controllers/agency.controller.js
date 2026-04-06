@@ -29,8 +29,8 @@ const agencyController = {
                 // Not superadmin, not in GHL -> Show assigned locations
                 if (user.agencyId) {
                     filter = { agencyId: user.agencyId };
-                } else if (user.locationId) {
-                    filter = { locationId: user.locationId };
+                } else if (user.locationIds && user.locationIds.length > 0) {
+                    filter = { locationId: { $in: user.locationIds } };
                 } else {
                     filter = { locationId: 'none' };
                 }
@@ -262,7 +262,7 @@ const agencyController = {
 
             if (!req.session.user) {
                 req.session.user = { 
-                    locationId: locationId, 
+                    locationIds: [locationId], 
                     role: 'ghl_user',
                     isGhlEmbedded: true 
                 };
