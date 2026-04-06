@@ -61,6 +61,32 @@ app.use(session({
 
 app.use(flash());
 
+// ── Global Context Detection (GHL) ──────────────────────────────────────────
+app.use((req, res, next) => {
+    // Detect from Query
+    let queryLocationId = req.query.location_id || req.query.locationId;
+    
+    // Detect from Referer (Parent GHL Page)
+    let refererLocationId = null;
+    const referer = req.headers.referer || '';
+    if (referer) {
+        // Robust regex for GHL Referer detection
+        const match = referer.match(/location\/([a-zA-Z0-9]+)/i) || referer.match(/location_id=([a-zA-Z0-9]+)/i);
+        if (match && match[1]) {
+            refererLocationId = match[1];
+        }
+    }
+
+    const detectedId = queryLocationId || refererLocationId;
+    if (detectedId) {
+        // Update session immediately if switch detected
+        req.session.activeLocationId = detectedId;
+        req.query.locationId = detectedId; // Normalization
+    }
+
+    next();
+});
+
 // ── Global view locals ────────────────────────────────────────────────────────
 app.use((req, res, next) => {
     res.locals.error = req.flash('error');
