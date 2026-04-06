@@ -23,7 +23,7 @@ const agencyController = {
             const activeLocationId = (req.query.locationId || req.query.location_id || req.session.activeLocationId);
             
             if (!isSuperAdmin && activeLocationId) {
-                // Not superadmin but in GHL context -> Show only current
+                // Not superadmin but in GHL context -> Show only current (Isolation)
                 filter = { locationId: activeLocationId };
             } else if (!isSuperAdmin) {
                 // Not superadmin, not in GHL -> Show assigned locations
@@ -34,11 +34,9 @@ const agencyController = {
                 } else {
                     filter = { locationId: 'none' };
                 }
-            } else if (req.query.locationId || req.query.location_id) {
-                // Superadmin manually filtering by URL param
-                filter = { locationId: req.query.locationId || req.query.location_id };
             }
-            // else: superadmin with no explicit filter -> filter = {} -> see all!
+            // Superadmins always see all agencies by default on this index page,
+            // even if a specific locationId was detected from the GHL context.
 
             if (search) {
                 filter.agencyName = { $regex: search, $options: 'i' };
