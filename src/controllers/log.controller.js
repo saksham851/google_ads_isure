@@ -1,6 +1,7 @@
 const ConversionLog = require('../models/conversionLog.model');
 const WebhookLog = require('../models/webhookLog.model');
 const Agency = require('../models/agency.model');
+const User = require('../models/User');
 
 const logController = {
     // GET /logs
@@ -51,8 +52,23 @@ const logController = {
             } else if (!isSuperAdmin) {
                 const userAgencies = await Agency.find(agenciesQuery);
                 filter.agencyId = { $in: userAgencies.map(a => a._id) };
+            } else if (isSuperAdmin && req.query.userId) {
+                // Global filter by user for superadmin
+                const targetUser = await User.findById(req.query.userId);
+                if (targetUser) {
+                    let targetAgenciesQuery = {};
+                    if (targetUser.locationId) targetAgenciesQuery = { locationId: targetUser.locationId };
+                    else if (targetUser.agencyId) targetAgenciesQuery = { agencyId: targetUser.agencyId };
+                    else targetAgenciesQuery = { _id: null };
+
+                    const userAgencies = await Agency.find(targetAgenciesQuery);
+                    filter.agencyId = { $in: userAgencies.map(a => a._id) };
+                    res.locals.filteredByUserName = targetUser.email;
+                }
+            } else if (isSuperAdmin && activeLocationId) {
+                const agency = await Agency.findOne({ locationId: activeLocationId });
+                if (agency) filter.agencyId = agency._id;
             }
-            // else: superadmin with no specific filters -> agenciesQuery = {}, filter = {} -> see all!
 
             const [agencies, logs, totalLogs] = await Promise.all([
                 Agency.find(agenciesQuery).sort({ agencyName: 1 }),
@@ -169,6 +185,22 @@ const logController = {
                         filter = { ...filter, ...locationFilter };
                     }
                 }
+            } else if (isSuperAdmin && req.query.userId) {
+                const targetUser = await User.findById(req.query.userId);
+                if (targetUser) {
+                    let targetAgenciesQuery = {};
+                    if (targetUser.locationId) targetAgenciesQuery = { locationId: targetUser.locationId };
+                    else if (targetUser.agencyId) targetAgenciesQuery = { agencyId: targetUser.agencyId };
+                    else targetAgenciesQuery = { _id: 'none' };
+
+                    const userAgencies = await Agency.find(targetAgenciesQuery);
+                    const locationIds = userAgencies.map(a => a.locationId);
+                    filter.$or = [
+                        { locationId: { $in: locationIds } },
+                        { 'payload.location_id': { $in: locationIds } }
+                    ];
+                    res.locals.filteredByUserName = targetUser.email;
+                }
             } else if (activeLocationId) {
                 // Superadmin manually filtering via select or URL? Still resolve the name
                const agency = await Agency.findOne({ locationId: activeLocationId });
@@ -179,7 +211,6 @@ const logController = {
                     filter.locationId = activeLocationId;
                }
             }
-            // else: superadmin with no specific filters -> agenciesQuery = {}, filter = {} -> see all!
 
             // Event Type Filter
             if (eventType) {

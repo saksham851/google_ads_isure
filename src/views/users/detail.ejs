@@ -1,0 +1,185 @@
+<div class="row g-4">
+    <!-- Premium User Profil Header -->
+    <div class="col-12">
+        <div class="card border-0 shadow-sm" style="border-radius: 16px; background: linear-gradient(135deg, #1a73e8 0%, #1557b0 100%);">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-4">
+                    <div class="d-flex align-items-center gap-4">
+                        <div class="bg-white rounded-circle d-flex align-items-center justify-content-center border border-4 border-white-50 shadow" style="width: 72px; height: 72px;">
+                            <span class="h2 mb-0 fw-bold text-primary"><%= managedUser.email.substring(0,1).toUpperCase() %></span>
+                        </div>
+                        <div>
+                            <h4 class="fw-bold text-white mb-1"><%= managedUser.email %></h4>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-white text-primary rounded-pill px-3 py-1 fw-bold" style="font-size: 10px; letter-spacing: 0.5px;">
+                                    <i class="ti ti-shield-check me-1"></i> <%= managedUser.role.toUpperCase() %> ACCESS
+                                </span>
+                                <span class="text-white-50 small">Active member since <%= new Date(managedUser.createdAt).toLocaleDateString() %></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="/logs?userId=<%= managedUser._id %>" class="btn btn-white btn-sm rounded-pill px-3 fw-bold"><i class="ti ti-history me-1"></i> Full Audit</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Accounts Stats Quick Glance Row -->
+    <div class="col-12">
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100" style="border-radius: 16px; background: #fff;">
+                    <div class="card-body d-flex align-items-center gap-3 py-4">
+                        <div class="p-3 bg-soft-primary rounded-circle shadow-sm">
+                            <i class="ti ti-building-community text-primary h4 mb-0"></i>
+                        </div>
+                        <div>
+                            <h3 class="fw-bold text-dark mb-0"><%= agencies.length %></h3>
+                            <p class="text-muted small fw-bold text-uppercase mb-0" style="font-size: 10px; letter-spacing: 0.5px;">Linked Accounts</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100" style="border-radius: 16px; background: #fff;">
+                    <div class="card-body d-flex align-items-center gap-3 py-4">
+                        <div class="p-3 bg-soft-success rounded-circle shadow-sm">
+                            <i class="ti ti-chart-bar text-success h4 mb-0"></i>
+                        </div>
+                        <div>
+                            <h3 class="fw-bold text-dark mb-0"><%= conversionLogs.length %></h3>
+                            <p class="text-muted small fw-bold text-uppercase mb-0" style="font-size: 10px; letter-spacing: 0.5px;">Conversion Events</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100" style="border-radius: 16px; background: #fff;">
+                    <div class="card-body d-flex align-items-center gap-3 py-4">
+                        <div class="p-3 bg-soft-warning rounded-circle shadow-sm">
+                            <i class="ti ti-plug text-warning h4 mb-0"></i>
+                        </div>
+                        <div>
+                            <h3 class="fw-bold text-dark mb-0"><%= webhookLogs.length %></h3>
+                            <p class="text-muted small fw-bold text-uppercase mb-0" style="font-size: 10px; letter-spacing: 0.5px;">Webhook Inbound</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Full Width Sub-Account Ownership -->
+    <div class="col-12">
+        <div class="card border-0 shadow-sm" style="border-radius: 16px;">
+            <div class="card-header bg-white py-3 px-4 border-bottom d-flex align-items-center justify-content-between">
+                <h6 class="mb-0 fw-bold text-dark"><i class="ti ti-shield-lock me-2 text-primary"></i> GHL Sub-Account Ownership & Authorized Access</h6>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-soft-primary text-primary rounded-pill px-3 py-1 fw-bold" style="font-size: 11px;">SECURE CONNECTION</span>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="overflow: visible !important;">
+                    <table class="table table-hover align-middle mb-0" style="font-size: 14px;">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="px-4 py-3 border-0 text-muted fw-bold text-uppercase" style="font-size: 10px; letter-spacing: 1px;">Account Name</th>
+                                <th class="py-3 border-0 text-muted fw-bold text-uppercase" style="font-size: 10px; letter-spacing: 1px;">API / Location Token</th>
+                                <th class="py-3 border-0 text-muted fw-bold text-uppercase text-center" style="font-size: 10px; letter-spacing: 1px;">Connection Status</th>
+                                <th class="px-4 py-3 border-0 text-muted fw-bold text-uppercase text-end" style="font-size: 10px; letter-spacing: 1px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (agencies && agencies.length > 0) { %>
+                                <% agencies.forEach(a => { %>
+                                    <tr>
+                                        <td class="px-4 py-3">
+                                            <span class="fw-bold text-dark d-block" style="font-size: 15px;"><%= a.subAccountName %></span>
+                                            <small class="text-muted">Direct authorized sub-account</small>
+                                        </td>
+                                        <td>
+                                            <div class="d-inline-flex align-items-center gap-2 bg-light border rounded px-3 py-1">
+                                                <i class="ti ti-key text-muted small"></i>
+                                                <code class="text-primary fw-bold" style="font-size: 12px;"><%= a.locationId %></code>
+                                            </div>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="d-inline-flex align-items-center gap-2 bg-soft-success text-success px-3 py-1 rounded-pill fw-bold" style="font-size: 11px; letter-spacing: 0.5px;">
+                                                <i class="ti ti-bolt"></i> CONNECTED
+                                            </span>
+                                        </td>
+                                        <td class="px-4 text-end">
+                                            <a href="/logs?locationId=<%= a.locationId %>" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold" style="font-size: 11px;">
+                                                View Account Logs
+                                            </a>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr><td colspan="4" class="text-center py-5 text-muted small">No sub-accounts linked to this identity.</td></tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- High Density Recent Activity Feed -->
+    <div class="col-12">
+        <div class="card border-0 shadow-sm" style="border-radius: 16px;">
+            <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center border-bottom">
+                <h6 class="mb-0 fw-bold text-dark"><i class="ti ti-history me-2 text-primary"></i> Account-Wide Recent Activity</h6>
+                <div class="btn-group shadow-sm rounded-pill overflow-hidden border">
+                    <a href="/logs?userId=<%= managedUser._id %>" class="btn btn-sm btn-white px-3 border-0 small fw-bold">Conversions</a>
+                    <a href="/webhooks-logs?userId=<%= managedUser._id %>" class="btn btn-sm btn-white border-0 border-start px-3 small fw-bold">Webhooks</a>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="overflow: visible !important;">
+                    <table class="table table-hover mb-0" style="font-size: 13px;">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="px-4 py-3 small text-uppercase text-muted border-0" style="font-size: 10px;">Target Account</th>
+                                <th class="py-3 small text-uppercase text-muted border-0" style="font-size: 10px;">Lead Reference</th>
+                                <th class="py-3 small text-uppercase text-muted border-0 text-center" style="font-size: 10px;">Status</th>
+                                <th class="px-4 py-3 text-end small text-uppercase text-muted border-0" style="font-size: 10px;">Timestamp</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (conversionLogs && conversionLogs.length > 0) { %>
+                                <% conversionLogs.slice(0, 10).forEach(log => { %>
+                                    <tr>
+                                        <td class="px-4 py-3 fw-bold text-dark"><%= log.agencyId ? log.agencyId.subAccountName : 'Internal' %></td>
+                                        <td class="py-3 text-secondary">
+                                            <span class="bg-light border rounded px-2 py-1" style="font-family: monospace; font-size: 11px;">
+                                                <%= log.leadId ? log.leadId.email : 'system_ref' %>
+                                            </span>
+                                        </td>
+                                        <td class="py-3 text-center">
+                                            <span class="d-inline-flex align-items-center gap-1 text-<%= log.status === 'success' ? 'success' : 'danger' %> fw-bold" style="font-size: 11px;">
+                                                <i class="ti ti-<%= log.status === 'success' ? 'circle-check' : 'alert-circle' %>-filled ps-1"></i> <%= log.status.toUpperCase() %>
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-3 text-end text-muted opacity-75"><%= new Date(log.createdAt).toLocaleString([], {hour: '2-digit', minute:'2-digit', day:'2-digit', month:'2-digit'}) %></td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr><td colspan="4" class="text-center py-5 text-muted small">No recent activity detected in the conversion audit.</td></tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-soft-primary { background: #e8f0fe; color: #1a73e8; }
+    .bg-soft-warning { background: #fef7e0; color: #f9ab00; }
+    .btn-white { background: #fff; color: #3c4043; border: 1px solid #dadce0 !important; }
+    .btn-white:hover { background: #f8f9fa; color: #1a73e8; border-color: #1a73e8 !important; }
+</style>

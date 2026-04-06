@@ -19,6 +19,7 @@ const agencyRoutes = require('./routes/agency.routes');
 const logRoutes = require('./routes/log.routes');
 const webhookRoutes = require('./routes/webhook.routes');
 const googleAdsRoutes = require('./routes/googleAds.routes');
+const adminUserRoutes = require('./routes/admin.user.routes');
 
 // ── Controller / Middleware imports ───────────────────────────────────────────
 const dashboardController = require('./controllers/dashboard.controller');
@@ -131,6 +132,7 @@ app.use('/webhooks', webhookRoutes);
 // Authenticated app routes
 app.use('/user', userAuthRoutes);
 app.use('/agencies', agencyRoutes);
+app.use('/users', adminUserRoutes);
 app.use('/', logRoutes);
 
 // Google Ads JSON API (for frontend dropdowns)

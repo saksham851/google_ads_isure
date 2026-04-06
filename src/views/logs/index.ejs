@@ -1,131 +1,147 @@
 <div class="row">
     <div class="col-12">
-        <div class="card table-card mt-3">
-            <div class="card-header border-bottom py-3">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <!-- Slim Audit Context Indicator -->
+        <% if (typeof filteredByUserName !== 'undefined' && filteredByUserName) { %>
+            <div class="d-flex align-items-center justify-content-between px-3 py-2 mb-3 bg-white border rounded shadow-sm border-start-4 border-primary">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="bg-soft-primary p-2 rounded-circle">
+                        <i class="ti ti-user text-primary h5 mb-0"></i>
+                    </div>
                     <div>
-                        <h5 class="mb-0 fw-bold">Conversion Logs</h5>
-                        <p class="text-muted mb-0" style="font-size: 13px;">Recent offline conversions pushed to Google Ads.</p>
+                        <small class="text-muted d-block" style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;">Auditing Activity</small>
+                        <span class="fw-bold text-dark"><%= filteredByUserName %></span>
+                    </div>
+                </div>
+                <a href="/logs" class="btn btn-sm btn-outline-danger rounded-pill px-3" style="font-size: 11px;">
+                    <i class="ti ti-x small"></i> Clear Audit Mode
+                </a>
+            </div>
+        <% } %>
+
+        <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+            <div class="card-header border-bottom bg-white py-3 px-4">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                    <div>
+                        <h6 class="mb-1 fw-bold text-dark">Conversion History</h6>
+                        <p class="text-muted mb-0 small">Verified offline conversions pushed to Google Ads.</p>
                     </div>
                     
-                    <form action="/logs" method="GET" class="d-flex align-items-center gap-2 flex-wrap">
-                        <!-- Search term -->
-                        <div class="input-group input-group-sm" style="width: 250px;">
-                            <span class="input-group-text bg-white border-end-0"><i class="ti ti-search text-muted"></i></span>
-                            <input type="text" name="search" class="form-control ps-0 border-start-0" placeholder="Search GCLID/Email..." value="<%= typeof search !== 'undefined' ? search : '' %>" style="border-radius: 0 8px 8px 0;">
+                    <form action="/logs" method="GET" class="d-flex align-items-center gap-2">
+                        <div class="input-group input-group-sm border rounded-pill overflow-hidden px-2 bg-light" style="width: 240px;">
+                            <span class="input-group-text bg-transparent border-0"><i class="ti ti-search text-muted small"></i></span>
+                            <input type="text" name="search" class="form-control bg-transparent border-0 shadow-none ps-0" placeholder="Search leads..." value="<%= typeof search !== 'undefined' ? search : '' %>">
                         </div>
 
-                        <!-- Agency Filter (Only for superadmin) -->
                         <% if (typeof user !== 'undefined' && user.role === 'superadmin') { %>
-                            <select name="locationId" class="form-select form-select-sm" style="width: 200px; border-radius: 8px;">
-                                <option value="">— All Sub-accounts —</option>
+                            <select name="locationId" class="form-select form-select-sm border rounded-pill px-3 shadow-none bg-light" style="width: 180px;">
+                                <option value="">All Accounts</option>
                                 <% agencies.forEach(ag => { %>
                                     <option value="<%= ag.locationId %>" <%= locationId === ag.locationId ? 'selected' : '' %>><%= ag.agencyName %></option>
                                 <% }) %>
                             </select>
                         <% } %>
 
-                        <!-- Days Filter -->
-                        <select name="days" class="form-select form-select-sm" style="width: 140px; border-radius: 8px;">
+                        <select name="days" class="form-select form-select-sm border rounded-pill px-3 shadow-none bg-light" style="width: 120px;">
                             <option value="all" <%= days === 'all' ? 'selected' : '' %>>All Time</option>
-                            <option value="7" <%= days === '7' ? 'selected' : '' %>>Last 7 Days</option>
-                            <option value="30" <%= days === '30' ? 'selected' : '' %>>Last 30 Days</option>
-                            <option value="90" <%= days === '90' ? 'selected' : '' %>>Last 90 Days</option>
+                            <option value="7" <%= days === '7' ? 'selected' : '' %>>7d</option>
+                            <option value="30" <%= days === '30' ? 'selected' : '' %>>30d</option>
                         </select>
 
-                        <button type="submit" class="btn btn-sm btn-primary px-3" style="border-radius: 8px;">
-                            <i class="ti ti-filter me-1"></i> Apply
-                        </button>
-                        
-                        <% if (locationId || (days && days !== 'all') || (typeof search !== 'undefined' && search)) { %>
-                            <a href="/logs" class="btn btn-sm btn-light border px-2" title="Reset Filters" style="border-radius: 8px;">
-                                <i class="ti ti-rotate-clockwise"></i>
+                        <% if ((typeof search !== 'undefined' && search) || (typeof locationId !== 'undefined' && locationId) || (typeof days !== 'undefined' && days !== 'all')) { %>
+                            <a href="/logs" class="btn btn-light btn-sm rounded-pill px-3 fw-bold border">
+                                <i class="ti ti-rotate-clockwise me-1"></i> Clear
                             </a>
                         <% } %>
+
+                        <button type="submit" class="btn btn-primary btn-sm rounded-pill px-4 shadow-sm">
+                            Apply
+                        </button>
                     </form>
                 </div>
             </div>
-            <div class="card-body pt-3">
-                <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
-                    <table class="table mb-0">
-                        <thead style="position: sticky; top: 0; background: #fff; z-index: 1;">
+            
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
+                        <thead class="bg-light">
                             <tr>
-                                <th>Sub-account</th>
-                                <th>Lead Email</th>
-                                <th>GCLID</th>
-                                <th>Action</th>
-                                <th>Value</th>
-                                <th>Status</th>
-                                <th>Time</th>
+                                <th class="px-4 py-3 border-0 text-muted small text-uppercase">Account</th>
+                                <th class="py-3 border-0 text-muted small text-uppercase">Lead Email</th>
+                                <th class="py-3 border-0 text-muted small text-uppercase">GCLID Chip</th>
+                                <th class="py-3 border-0 text-muted small text-uppercase">Action</th>
+                                <th class="py-3 border-0 text-muted small text-uppercase">Val</th>
+                                <th class="py-3 border-0 text-muted small text-uppercase text-center">Status</th>
+                                <th class="py-3 px-4 border-0 text-muted small text-uppercase text-end">Processed</th>
                             </tr>
                         </thead>
                         <tbody>
                             <% logs.forEach(log => { %>
-                            <tr>
-                                <td><span class="fw-bold text-dark"><%= log.agencyId ? log.agencyId.agencyName : 'Unknown' %></span></td>
-                                <td><%= log.leadId ? log.leadId.email : 'N/A' %></td>
-                                <td><code><%= (log.gclid || '').substring(0, 16) %>...</code></td>
-                                <td><%= log.conversionAction || '—' %></td>
-                                <td><%= log.conversionValue || 0 %></td>
+                            <tr class="transition-all">
+                                <td class="px-4 py-3 fw-bold text-dark"><%= log.agencyId ? log.agencyId.agencyName : 'Unknown' %></td>
+                                <td><span class="text-secondary"><%= log.leadId ? log.leadId.email : 'N/A' %></span></td>
                                 <td>
-                                    <% 
-                                        var statusColor = log.status === 'success' ? '#1e8e3e' : (log.status === 'failed' ? '#c5221f' : '#b06000');
-                                        var statusBg    = log.status === 'success' ? '#e6f4ea'  : (log.status === 'failed' ? '#fce8e6'  : '#fef9e7');
-                                    %>
-                                    <span style="background:<%= statusBg %>;color:<%= statusColor %>;border-radius:12px;padding:3px 10px;font-size:12px;font-weight:600;">
-                                        <%= (log.status || 'unknown').toUpperCase() %>
-                                    </span>
+                                    <div class="d-inline-flex align-items-center bg-light border rounded px-2 py-1" style="font-family: monospace; font-size: 11px;">
+                                        <i class="ti ti-fingerprint me-1 opacity-50"></i>
+                                        <%= (log.gclid || '').substring(0, 10) %>...
+                                    </div>
                                 </td>
-                                <td style="font-size: 13px; color: #70757a;"><%= new Date(log.createdAt).toLocaleString() %></td>
+                                <td><span class="badge bg-soft-primary text-primary px-2 rounded-pill"><%= log.conversionAction || '—' %></span></td>
+                                <td class="fw-bold">$<%= (log.conversionValue || 0).toLocaleString() %></td>
+                                <td class="text-center">
+                                    <% if (log.status === 'success') { %>
+                                        <span class="d-inline-flex align-items-center gap-1 text-success fw-bold" style="font-size: 11px;">
+                                            <i class="ti ti-circle-check-filled"></i> SUCCESS
+                                        </span>
+                                    <% } else if (log.status === 'failed') { %>
+                                        <span class="d-inline-flex align-items-center gap-1 text-danger fw-bold" style="font-size: 11px;">
+                                            <i class="ti ti-circle-x-filled"></i> FAILED
+                                        </span>
+                                    <% } else { %>
+                                        <span class="d-inline-flex align-items-center gap-1 text-warning fw-bold" style="font-size: 11px;">
+                                            <i class="ti ti-clock"></i> PENDING
+                                        </span>
+                                    <% } %>
+                                </td>
+                                <td class="px-4 py-3 text-end text-muted opacity-75"><%= new Date(log.createdAt).toLocaleDateString() %></td>
                             </tr>
                             <% }) %>
                             <% if (logs.length === 0) { %>
                                 <tr>
-                                    <td colspan="7" class="text-center py-5 text-muted">No conversion logs found.</td>
+                                    <td colspan="7" class="text-center py-5 text-muted small">No conversion logs found.</td>
                                 </tr>
                             <% } %>
                         </tbody>
                     </table>
                 </div>
-
-                <!-- Pagination -->
-                <% if (totalPages > 1) { %>
-                <div class="card-footer bg-white border-top py-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="text-muted small">
-                            Showing <%= logs.length %> of <%= totalLogs %> entries
-                        </div>
-                        <nav aria-label="Page navigation">
-                            <ul class="pagination pagination-sm mb-0">
-                                <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
-                                    <a class="page-link" href="/logs?page=<%= currentPage - 1 %>&locationId=<%= locationId %>&days=<%= days %>&search=<%= typeof search !== 'undefined' ? search : '' %>">
-                                        <i class="ti ti-chevron-left"></i>
-                                    </a>
-                                </li>
-                                
-                                <% 
-                                    let startPage = Math.max(1, currentPage - 2);
-                                    let endPage = Math.min(totalPages, startPage + 4);
-                                    if (endPage - startPage < 4) startPage = Math.max(1, endPage - 4);
-                                %>
-
-                                <% for(let i = startPage; i <= endPage; i++) { %>
-                                    <li class="page-item <%= currentPage === i ? 'active' : '' %>">
-                                        <a class="page-link" href="/logs?page=<%= i %>&locationId=<%= locationId %>&days=<%= days %>&search=<%= typeof search !== 'undefined' ? search : '' %>"><%= i %></a>
-                                    </li>
-                                <% } %>
-
-                                <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
-                                    <a class="page-link" href="/logs?page=<%= currentPage + 1 %>&locationId=<%= locationId %>&days=<%= days %>&search=<%= typeof search !== 'undefined' ? search : '' %>">
-                                        <i class="ti ti-chevron-right"></i>
-                                    </a>
-                                </li>
-                            </ul>
-                        </nav>
-                    </div>
-                </div>
-                <% } %>
             </div>
+
+            <% if (totalPages > 1) { %>
+            <div class="card-footer bg-white border-top py-3 px-4">
+                <nav class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted small">Showing last <%= logs.length %> entries</span>
+                    <ul class="pagination pagination-sm mb-0 gap-1 mt-0">
+                        <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+                            <a class="page-link border shadow-none rounded-pill" href="/logs?page=<%= currentPage - 1 %>&userId=<%= typeof userId !== 'undefined' ? userId : '' %>">
+                                <i class="ti ti-chevron-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item active"><span class="page-link border shadow-none rounded-pill bg-primary text-white border-primary"><%= currentPage %></span></li>
+                        <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+                            <a class="page-link border shadow-none rounded-pill" href="/logs?page=<%= currentPage + 1 %>&userId=<%= typeof userId !== 'undefined' ? userId : '' %>">
+                                <i class="ti ti-chevron-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+            <% } %>
         </div>
     </div>
 </div>
+
+<style>
+    .bg-soft-primary { background-color: #e8f0fe; }
+    .transition-all { transition: all 0.2s ease; }
+    .transition-all:hover { background-color: #f8f9fa !important; transform: translateY(-1px); }
+    .border-start-4 { border-left-width: 4px !important; }
+</style>

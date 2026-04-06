@@ -29,6 +29,16 @@
                     </a>
                 </li>
 
+                <% if (user && user.role === 'superadmin') { %>
+                <li
+                    class="pc-item <%= typeof activePage !== 'undefined' && activePage === 'users' ? 'active' : '' %>">
+                    <a href="/users" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-users"></i></span>
+                        <span class="pc-mtext">Users</span>
+                    </a>
+                </li>
+                <% } %>
+
                 <li class="pc-item pc-caption">
                     <label class="fw-bold text-uppercase small"
                         style="letter-spacing: 1px; color: #94a3b8;">Integrations</label>
