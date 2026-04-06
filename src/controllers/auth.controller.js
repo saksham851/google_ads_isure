@@ -17,7 +17,13 @@ exports.install = (req, res) => {
 
     // Construct the URL EXACTLY as per your working example (using + for spaces in scopes)
     const encodedScopes = scopes.split(' ').join('+');
-    const installUrl = `https://marketplace.gohighlevel.com/oauth/chooselocation?response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&client_id=${clientId}&scope=${encodedScopes}&version_id=${versionId}`;
+    let installUrl = `https://marketplace.gohighlevel.com/oauth/chooselocation?response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&client_id=${clientId}&scope=${encodedScopes}&version_id=${versionId}`;
+
+    // If we have a locationId from GHL iframe, pass it through to pre-select for the user
+    const locationId = req.query.location_id || req.query.locationId;
+    if (locationId) {
+        installUrl += `&location_id=${locationId}`;
+    }
 
     res.redirect(installUrl);
 };

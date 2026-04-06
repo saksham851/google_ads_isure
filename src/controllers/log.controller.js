@@ -15,14 +15,17 @@ const logController = {
             let selectedAgencyName = null;
             const user = req.session.user;
 
+            const activeLocationId = req.query.locationId || req.query.location_id || req.session.activeLocationId;
             let agenciesQuery = {};
-            if (user.role !== 'superadmin') {
+            
+            if (activeLocationId) {
+                agenciesQuery = { locationId: activeLocationId };
+            } else if (user.role !== 'superadmin') {
                 if (user.agencyId) agenciesQuery = { agencyId: user.agencyId };
                 else if (user.locationId) agenciesQuery = { locationId: user.locationId };
                 else agenciesQuery = { locationId: 'none' };
             }
 
-            const activeLocationId = req.query.locationId || req.query.location_id || req.session.activeLocationId;
 
             if (search) {
                 // To search by lead email, we might need a join or search by gclid/status
@@ -96,14 +99,17 @@ const logController = {
             let selectedAgencyName = null;
             const user = req.session.user;
 
+            const activeLocationId = req.query.locationId || req.query.location_id || req.session.activeLocationId;
             let agenciesQuery = {};
-            if (user.role !== 'superadmin') {
+            
+            if (activeLocationId) {
+                agenciesQuery = { locationId: activeLocationId };
+            } else if (user.role !== 'superadmin') {
                 if (user.agencyId) agenciesQuery = { agencyId: user.agencyId };
                 else if (user.locationId) agenciesQuery = { locationId: user.locationId };
                 else agenciesQuery = { locationId: 'none' };
             }
 
-            const activeLocationId = req.query.locationId || req.query.location_id || req.session.activeLocationId;
 
             if (search) {
                 filter.$or = [

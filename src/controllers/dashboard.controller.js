@@ -14,21 +14,21 @@ const dashboardController = {
             let agencyFilter = {};
             let webhookFilter = {};
 
-            if (user.role !== 'superadmin') {
-                const activeLocationId = req.query.locationId || req.query.location_id || req.session.activeLocationId;
+            const activeLocationId = req.query.locationId || req.query.location_id || req.session.activeLocationId;
 
-                if (activeLocationId) {
-                    // Filter specifically for the active GHL sub-account (Marketplace app inside location)
-                    agencyFilter = { locationId: activeLocationId };
-                    webhookFilter = { locationId: activeLocationId };
-                    
-                    const agency = await Agency.findOne({ locationId: activeLocationId });
-                    if (agency) {
-                        logsFilter = { agencyId: agency._id };
-                    } else {
-                        logsFilter = { agencyId: null }; 
-                    }
-                } else if (user.agencyId) {
+            if (activeLocationId) {
+                // Filter specifically for the active GHL sub-account (Marketplace app inside location)
+                agencyFilter = { locationId: activeLocationId };
+                webhookFilter = { locationId: activeLocationId };
+                
+                const agency = await Agency.findOne({ locationId: activeLocationId });
+                if (agency) {
+                    logsFilter = { agencyId: agency._id };
+                } else {
+                    logsFilter = { agencyId: null }; 
+                }
+            } else if (user.role !== 'superadmin') {
+                if (user.agencyId) {
                     const agencies = await Agency.find({ agencyId: user.agencyId });
                     const locationIds = agencies.map(a => a.locationId);
                     const agencyObjectIds = agencies.map(a => a._id);
