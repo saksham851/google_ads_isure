@@ -1,19 +1,23 @@
 const isAuthenticated = (req, res, next) => {
     // 0. Capture locationId from GHL if present in query or referer
-    let locationId = req.query.location_id || req.query.locationId;
+    let queryLocationId = req.query.location_id || req.query.locationId;
+    let refererLocationId = null;
 
-    // Fallback: Extract from Referer header (GHL uses /location/ID/ in its URLs)
-    if (!locationId && req.headers.referer) {
-        // Robust regex to find location ID after /location/ in any GHL-based app URL
+    // Extract from Referer header (GHL uses /location/ID/ in its URLs)
+    if (req.headers.referer) {
         const match = req.headers.referer.match(/location\/([a-zA-Z0-9]{10,})/);
-        if (match) locationId = match[1];
+        if (match) refererLocationId = match[1];
     }
 
-    if (locationId) {
-        req.session.activeLocationId = locationId;
-        req.query.locationId = locationId;
+    // Determine target locationId: Prioritize Query > Referer > Session
+    let targetLocationId = queryLocationId || refererLocationId;
+
+    if (targetLocationId) {
+        // Switch session if we found a new locationId in query or referer
+        req.session.activeLocationId = targetLocationId;
+        req.query.locationId = targetLocationId;
     } else if (req.session.activeLocationId) {
-        // Carry over from session to query for controllers
+        // Keep existing session if no new context found
         req.query.locationId = req.session.activeLocationId;
     }
 
