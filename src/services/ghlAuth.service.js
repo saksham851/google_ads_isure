@@ -2,9 +2,10 @@ const Agency = require('../models/agency.model');
 const User = require('../models/User'); // Required for mapping
 const ghlIntegration = require('../integrations/ghl.integration');
 const logger = require('../utils/logger');
+const crypto = require('crypto');
 
 class GHLAuthService {
-    async handleCallback(code) {
+    async handleCallback(code, sessionUser = null) {
         try {
             // 1. Exchange code for token
             const tokenData = await ghlIntegration.getAccessToken(code);
@@ -40,40 +41,43 @@ class GHLAuthService {
                 { upsert: true, new: true }
             );
 
-            // 4. Update User Mapping - Link this sub-account to the user who installed it
-            if (userId && locationId) {
-                let userEmail = `ghl_${userId}@example.com`; // Fallback email
-                try {
-                    // Try to fetch real user details from GHL if we have companyId
-                    const ghlUser = await ghlIntegration.getUserData(userId, companyId, access_token);
-                    if (ghlUser && ghlUser.user && ghlUser.user.email) {
-                        userEmail = ghlUser.user.email;
+            // 4. Update User Mapping - Link this sub-account to the user
+            if (locationId) {
+                let userEmail = sessionUser ? sessionUser.email : null;
+
+                // Only fetch from GHL if we don't have a session user
+                if (!userEmail && userId) {
+                    userEmail = `ghl_${userId}@example.com`; // Fallback email
+                    try {
+                        const ghlUser = await ghlIntegration.getUserData(userId, companyId, access_token);
+                        if (ghlUser && ghlUser.user && ghlUser.user.email) {
+                            userEmail = ghlUser.user.email;
+                        }
+                    } catch (err) {
+                        logger.warn(`Could not fetch user details for userId: ${userId}. Using fallback mapping.`);
                     }
-                } catch (err) {
-                    logger.warn(`Could not fetch user details for userId: ${userId}. Using fallback email.`);
                 }
 
-                const existingUser = await User.findOne({ email: userEmail });
-                const updateDoc = { 
-                    $addToSet: { locationIds: locationId },
-                    ghlUserId: userId,
-                    agencyId: companyId,
-                    role: 'user'
-                };
+                if (userEmail) {
+                    const existingUser = await User.findOne({ email: userEmail });
+                    const updateDoc = { 
+                        $addToSet: { locationIds: locationId },
+                        ghlUserId: userId,
+                        agencyId: companyId,
+                        role: existingUser ? existingUser.role : 'user'
+                    };
 
-                // If user doesn't exist, set a random password to satisfy model requirement
-                if (!existingUser) {
-                    const crypto = require('crypto');
-                    updateDoc.password = crypto.randomBytes(16).toString('hex');
+                    if (!existingUser) {
+                        updateDoc.password = crypto.randomBytes(16).toString('hex');
+                    }
+
+                    await User.findOneAndUpdate(
+                        { email: userEmail },
+                        updateDoc,
+                        { upsert: true, new: true }
+                    );
+                    logger.info(`[GHL Mapping] Mapped user ${userEmail} to location ${locationId}`);
                 }
-
-                // Upsert user and add this location to their managed list
-                await User.findOneAndUpdate(
-                    { email: userEmail },
-                    updateDoc,
-                    { upsert: true, new: true }
-                );
-                logger.info(`[GHL Mapping] Mapped user ${userEmail} to location ${locationId}`);
             }
 
             return agency;

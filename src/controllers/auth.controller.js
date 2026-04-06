@@ -40,7 +40,7 @@ exports.callback = async (req, res, next) => {
             return res.status(400).send('<h2>Authorization code is missing.</h2>');
         }
 
-        const agency = await ghlAuthService.handleCallback(code);
+        const agency = await ghlAuthService.handleCallback(code, req.session?.user);
         logger.info(`[GHL] App installed for Agency/Location: ${agency.agencyId} (${agency.locationId})`);
 
         // Redirect to agency detail page so user can now connect Google Ads
