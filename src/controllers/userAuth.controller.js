@@ -66,8 +66,11 @@ const userAuthController = {
 
     // GET /logout
     logout: (req, res) => {
-        req.session.destroy();
-        res.redirect('/user/login');
+        const locationId = req.session.activeLocationId || (req.session.user && req.session.user.locationId);
+        req.session.destroy((err) => {
+            if (err) console.error('[Auth] Logout session error:', err);
+            res.redirect(`/user/login${locationId ? '?locationId=' + locationId : ''}`);
+        });
     },
 
     // GET /forgot-password
