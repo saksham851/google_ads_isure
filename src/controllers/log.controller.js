@@ -16,11 +16,12 @@ const logController = {
             const user = req.session.user;
 
             const activeLocationId = req.query.locationId || req.query.location_id || req.session.activeLocationId;
+            const isSuperAdmin = user.role === 'superadmin';
             let agenciesQuery = {};
             
-            if (activeLocationId) {
+            if (!isSuperAdmin && activeLocationId) {
                 agenciesQuery = { locationId: activeLocationId };
-            } else if (user.role !== 'superadmin') {
+            } else if (!isSuperAdmin) {
                 if (user.agencyId) agenciesQuery = { agencyId: user.agencyId };
                 else if (user.locationId) agenciesQuery = { locationId: user.locationId };
                 else agenciesQuery = { locationId: 'none' };
@@ -41,16 +42,17 @@ const logController = {
                 filter.createdAt = { $gte: date };
             }
 
-            if (activeLocationId) {
+            if (!isSuperAdmin && activeLocationId) {
                 const agency = await Agency.findOne({ locationId: activeLocationId });
                 if (agency) {
                     filter.agencyId = agency._id;
                     selectedAgencyName = agency.agencyName;
                 }
-            } else if (user.role !== 'superadmin') {
+            } else if (!isSuperAdmin) {
                 const userAgencies = await Agency.find(agenciesQuery);
                 filter.agencyId = { $in: userAgencies.map(a => a._id) };
             }
+            // else: superadmin with no specific filters -> agenciesQuery = {}, filter = {} -> see all!
 
             const [agencies, logs, totalLogs] = await Promise.all([
                 Agency.find(agenciesQuery).sort({ agencyName: 1 }),
@@ -100,11 +102,12 @@ const logController = {
             const user = req.session.user;
 
             const activeLocationId = req.query.locationId || req.query.location_id || req.session.activeLocationId;
+            const isSuperAdmin = user.role === 'superadmin';
             let agenciesQuery = {};
             
-            if (activeLocationId) {
+            if (!isSuperAdmin && activeLocationId) {
                 agenciesQuery = { locationId: activeLocationId };
-            } else if (user.role !== 'superadmin') {
+            } else if (!isSuperAdmin) {
                 if (user.agencyId) agenciesQuery = { agencyId: user.agencyId };
                 else if (user.locationId) agenciesQuery = { locationId: user.locationId };
                 else agenciesQuery = { locationId: 'none' };
@@ -126,45 +129,57 @@ const logController = {
                 filter.createdAt = { $gte: date };
             }
 
-            // Agency Filter
-            if (activeLocationId) {
-                const locationFilter = {
-                    $or: [
-                        { locationId: activeLocationId },
-                        { 'payload.location_id': activeLocationId },
-                        { 'payload.contact.locationId': activeLocationId }
-                    ]
-                };
+            // Agency & Location Filter
+            if (!isSuperAdmin) {
+                if (activeLocationId) {
+                    const locationFilter = {
+                        $or: [
+                            { locationId: activeLocationId },
+                            { 'payload.location_id': activeLocationId },
+                            { 'payload.contact.locationId': activeLocationId }
+                        ]
+                    };
 
-                if (filter.$or) {
-                    const searchFilter = filter.$or;
-                    delete filter.$or;
-                    filter = { ...filter, $and: [ { $or: searchFilter }, locationFilter ] };
+                    if (filter.$or) {
+                        const searchFilter = filter.$or;
+                        delete filter.$or;
+                        filter = { ...filter, $and: [ { $or: searchFilter }, locationFilter ] };
+                    } else {
+                        filter = { ...filter, ...locationFilter };
+                    }
+                    
+                    const agency = await Agency.findOne({ locationId: activeLocationId });
+                    if (agency) selectedAgencyName = agency.agencyName;
                 } else {
-                    filter = { ...filter, ...locationFilter };
-                }
-                
-                const agency = await Agency.findOne({ locationId: activeLocationId });
-                if (agency) selectedAgencyName = agency.agencyName;
-            } else if (user.role !== 'superadmin') {
-                const userAgencies = await Agency.find(agenciesQuery);
-                const locationIds = userAgencies.map(a => a.locationId);
-                const locationFilter = {
-                    $or: [
-                        { locationId: { $in: locationIds } },
-                        { 'payload.location_id': { $in: locationIds } },
-                        { 'payload.contact.locationId': { $in: locationIds } }
-                    ]
-                };
+                    const userAgencies = await Agency.find(agenciesQuery);
+                    const locationIds = userAgencies.map(a => a.locationId);
+                    const locationFilter = {
+                        $or: [
+                            { locationId: { $in: locationIds } },
+                            { 'payload.location_id': { $in: locationIds } },
+                            { 'payload.contact.locationId': { $in: locationIds } }
+                        ]
+                    };
 
-                if (filter.$or) {
-                    const searchFilter = filter.$or;
-                    delete filter.$or;
-                    filter = { ...filter, $and: [ { $or: searchFilter }, locationFilter ] };
-                } else {
-                    filter = { ...filter, ...locationFilter };
+                    if (filter.$or) {
+                        const searchFilter = filter.$or;
+                        delete filter.$or;
+                        filter = { ...filter, $and: [ { $or: searchFilter }, locationFilter ] };
+                    } else {
+                        filter = { ...filter, ...locationFilter };
+                    }
                 }
+            } else if (activeLocationId) {
+                // Superadmin manually filtering via select or URL? Still resolve the name
+               const agency = await Agency.findOne({ locationId: activeLocationId });
+               if (agency) selectedAgencyName = agency.agencyName;
+
+               // Still apply the specific filter if one is actually requested but let them clear it easily
+               if (req.query.locationId || req.query.location_id) {
+                    filter.locationId = activeLocationId;
+               }
             }
+            // else: superadmin with no specific filters -> agenciesQuery = {}, filter = {} -> see all!
 
             // Event Type Filter
             if (eventType) {

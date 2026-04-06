@@ -15,44 +15,48 @@ const dashboardController = {
             let webhookFilter = {};
 
             const activeLocationId = req.query.locationId || req.query.location_id || req.session.activeLocationId;
+            const isSuperAdmin = user.role === 'superadmin';
 
-            if (activeLocationId) {
-                // Filter specifically for the active GHL sub-account (Marketplace app inside location)
-                agencyFilter = { locationId: activeLocationId };
-                webhookFilter = { locationId: activeLocationId };
-                
-                const agency = await Agency.findOne({ locationId: activeLocationId });
-                if (agency) {
-                    logsFilter = { agencyId: agency._id };
-                } else {
-                    logsFilter = { agencyId: null }; 
-                }
-            } else if (user.role !== 'superadmin') {
-                if (user.agencyId) {
-                    const agencies = await Agency.find({ agencyId: user.agencyId });
-                    const locationIds = agencies.map(a => a.locationId);
-                    const agencyObjectIds = agencies.map(a => a._id);
+            if (!isSuperAdmin) {
+                if (activeLocationId) {
+                    // Filter specifically for the active GHL sub-account (Marketplace app inside location)
+                    agencyFilter = { locationId: activeLocationId };
+                    webhookFilter = { locationId: activeLocationId };
                     
-                    agencyFilter = { locationId: { $in: locationIds } };
-                    webhookFilter = { locationId: { $in: locationIds } };
-                    logsFilter = { agencyId: { $in: agencyObjectIds } };
-                } else if (user.locationId) {
-                    agencyFilter = { locationId: user.locationId };
-                    webhookFilter = { locationId: user.locationId };
-                    
-                    const agency = await Agency.findOne({ locationId: user.locationId });
+                    const agency = await Agency.findOne({ locationId: activeLocationId });
                     if (agency) {
                         logsFilter = { agencyId: agency._id };
                     } else {
                         logsFilter = { agencyId: null }; 
                     }
-                } else {
-                    // Fallback if neither exists
-                    agencyFilter = { locationId: null };
-                    webhookFilter = { locationId: null };
-                    logsFilter = { agencyId: null };
+                } else if (user.role !== 'superadmin') {
+                    if (user.agencyId) {
+                        const agencies = await Agency.find({ agencyId: user.agencyId });
+                        const locationIds = agencies.map(a => a.locationId);
+                        const agencyObjectIds = agencies.map(a => a._id);
+                        
+                        agencyFilter = { locationId: { $in: locationIds } };
+                        webhookFilter = { locationId: { $in: locationIds } };
+                        logsFilter = { agencyId: { $in: agencyObjectIds } };
+                    } else if (user.locationId) {
+                        agencyFilter = { locationId: user.locationId };
+                        webhookFilter = { locationId: user.locationId };
+                        
+                        const agency = await Agency.findOne({ locationId: user.locationId });
+                        if (agency) {
+                            logsFilter = { agencyId: agency._id };
+                        } else {
+                            logsFilter = { agencyId: null }; 
+                        }
+                    } else {
+                        // Fallback if neither exists
+                        agencyFilter = { locationId: null };
+                        webhookFilter = { locationId: null };
+                        logsFilter = { agencyId: null };
+                    }
                 }
             }
+            // else: superadmin with no specific filters -> filters = {} -> global stats!
 
             const [agencyCount, conversionCount, webhookCount, failedCount, recentLogs, totalRecentLogs] = await Promise.all([
                 Agency.countDocuments(agencyFilter),
