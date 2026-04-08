@@ -43,40 +43,18 @@ exports.callback = async (req, res, next) => {
         const agency = await ghlAuthService.handleCallback(code, req.session?.user);
         logger.info(`[GHL] App installed for Agency/Location: ${agency.agencyId} (${agency.locationId})`);
 
-        // Redirect to agency detail page so user can now connect Google Ads
-        // If the request came from inside the dashboard (session exists), redirect there
+        // Determine redirect target (GoHighLevel dashboard or fallback)
+        const redirectUrl = agency.locationId 
+            ? `https://app.gohighlevel.com/v2/location/${agency.locationId}/dashboard`
+            : `https://app.gohighlevel.com/v2/settings/marketplace/installed_apps`;
+
         if (req.session && req.session.user) {
             req.flash('success', `GoHighLevel connected successfully for: ${agency.agencyName}`);
-            return res.redirect(`/agencies/${agency.locationId}/detail`);
+            return res.redirect(redirectUrl);
         }
 
-        // Otherwise show a simple success page (GHL iframe context)
-        res.send(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>App Installed</title>
-                <style>
-                    body { font-family: Arial, sans-serif; display: flex; align-items: center;
-                           justify-content: center; min-height: 100vh; margin: 0; background: #f8f9fa; }
-                    .card { background: #fff; border-radius: 12px; padding: 40px;
-                            text-align: center; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
-                    .icon { font-size: 48px; margin-bottom: 16px; }
-                    h2 { color: #1a73e8; margin: 0 0 8px; }
-                    p  { color: #5f6368; }
-                </style>
-            </head>
-            <body>
-                <div class="card">
-                    <div class="icon">✅</div>
-                    <h2>App Installed Successfully!</h2>
-                    <p>GoHighLevel is now connected to the Google Ads Tracking System.</p>
-                    <p><strong>Agency:</strong> ${agency.agencyName}</p>
-                    <p>You can now close this window and configure Google Ads in your dashboard.</p>
-                </div>
-            </body>
-            </html>
-        `);
+        // Otherwise, redirect them straight to their GoHighLevel sub-account dashboard
+        return res.redirect(redirectUrl);
     } catch (error) {
         logger.error('[GHL] Error in OAuth callback:', error);
         next(error);
