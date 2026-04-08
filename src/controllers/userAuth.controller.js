@@ -1,19 +1,6 @@
 const User = require('../models/User');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
-
-// Helper to create transport
-const createTransport = () => {
-    return nodemailer.createTransport({
-        host: process.env.MAIL_HOST || 'smtp.gmail.com',
-        port: parseInt(process.env.MAIL_PORT) || 465,
-        secure: process.env.MAIL_PORT == '465', // true for 465, false for other ports
-        auth: {
-            user: process.env.MAIL_USERNAME,
-            pass: process.env.MAIL_PASSWORD
-        }
-    });
-};
+const { sendEmail } = require('../utils/mail.util');
 
 const userAuthController = {
     // GET /login
@@ -104,9 +91,7 @@ const userAuthController = {
             console.log('Reset token generated and saved');
 
             // Send email
-            const transporter = createTransport();
             const resetUrl = `${req.protocol}://${req.get('host')}/reset-password/${token}`;
-
             const template = `
                 <h2>Password Reset Request</h2>
                 <p>Hello,</p>
@@ -116,9 +101,7 @@ const userAuthController = {
                 <p>If you did not request this, please ignore this email.</p>
             `;
 
-            console.log('Attempting to send email via nodemailer...');
-            await transporter.sendMail({
-                from: `"${process.env.MAIL_FROM_NAME}" <${process.env.MAIL_FROM_ADDRESS}>`,
+            await sendEmail({
                 to: email,
                 subject: 'Password Reset Request',
                 html: template
