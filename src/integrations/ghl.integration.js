@@ -76,6 +76,27 @@ class GHLIntegration {
         });
         return response.data;
     }
+
+    async uninstallApp(locationId, token) {
+        try {
+            const response = await axios.delete(`${this.apiBaseUrl}/marketplace/app/${this.clientId}/installations`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Version': '2021-07-28',
+                    'Content-Type': 'application/json'
+                },
+                data: {
+                    locationId: locationId,
+                    reason: 'User requested uninstall via app dashboard'
+                }
+            });
+            return response.data;
+        } catch (error) {
+            // Log full error but don't crash if it already uninstalled or failed
+            console.error('[GHL Integration] Uninstall API Error:', error.response?.data || error.message);
+            return null;
+        }
+    }
 }
 
 module.exports = new GHLIntegration();

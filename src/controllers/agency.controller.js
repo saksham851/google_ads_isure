@@ -1,6 +1,9 @@
 const Agency = require('../models/agency.model');
 const ConversionLog = require('../models/conversionLog.model');
 const WebhookLog = require('../models/webhookLog.model');
+const User = require('../models/User');
+const ghlIntegration = require('../integrations/ghl.integration');
+const logger = require('../utils/logger');
 
 const agencyController = {
 
@@ -170,8 +173,22 @@ const agencyController = {
             const agency = await Agency.findOne({ locationId: req.params.locationId });
             if (!agency) return res.status(404).json({ success: false, error: 'Agency not found' });
 
-            // Delete associated logs too if needed
+            // 1. Trigger GHL App Uninstall (remote)
+            if (agency.ghlAccessToken && agency.locationId) {
+                try {
+                    await ghlIntegration.uninstallApp(agency.locationId, agency.ghlAccessToken);
+                    logger.info(`[GHL] Successfully sent remote uninstall request for location: ${agency.locationId}`);
+                } catch (err) {
+                    logger.error(`[GHL] Failed to send remote uninstall request for ${agency.locationId}: ${err.message}`);
+                }
+            }
+
+            // 2. Delete associated logs, clean up user mapping, and delete local record
             await ConversionLog.deleteMany({ agencyId: agency._id });
+            await User.updateMany(
+                { locationIds: req.params.locationId },
+                { $pull: { locationIds: req.params.locationId } }
+            );
             await agency.deleteOne();
 
             res.json({ success: true });
