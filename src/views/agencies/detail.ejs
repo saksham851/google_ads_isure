@@ -108,10 +108,10 @@
         }
     </style>
 
-    <div class="row g-4">
+    <div class="row g-4 justify-content-between">
 
         <!-- ── Left Column: Status + Steps ──────────────────────────────── -->
-        <div class="col-lg-8">
+        <div class="col-xl-9 col-lg-8">
 
             <!-- Agency Status Bar -->
             <div class="card step-card mb-4 p-4">
@@ -303,12 +303,18 @@
                                         </div>
                                     </div>
                                 </div>
+                                <% if (!googleConnected) { %>
                                 <a href="/auth/google-login?locationId=<%= agency.locationId %>"
                                     target="_top"
                                     class="btn btn-sm btn-primary d-flex align-items-center gap-1 px-3"
                                     style="border-radius:6px;">
                                     <i class="ti ti-brand-google"></i> Connect with Google
                                 </a>
+                                <% } else { %>
+                                    <div class="d-flex align-items-center gap-2 text-success fw-bold" style="font-size: 13px;">
+                                        <i class="ti ti-circle-check-filled"></i> Authorized
+                                    </div>
+                                <% } %>
                             </div>
                             <% } %>
 
@@ -666,7 +672,8 @@
         </div>
 
     <!-- ── Right Column: Recent Logs ─────────────────────────────── -->
-    <div class="col-lg-4">
+    <div class="col-xl-3 col-lg-4">
+        <div class="sticky-top" style="top: 20px; z-index: 10;">
 
         <!-- Recent Conversions -->
         <div class="card step-card mb-3">
@@ -773,7 +780,8 @@
                         <% } %>
             </div>
         </div>
-    </div>
+            </div>
+        </div>
     </div>
 
     <script>
