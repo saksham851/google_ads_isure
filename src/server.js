@@ -94,6 +94,7 @@ app.use((req, res, next) => {
     res.locals.success = req.flash('success');
     res.locals.user = req.session.user || null;
     res.locals.activeLocationId = req.session.activeLocationId || null;
+    res.locals.isGhlEmbedded = req.session.user?.isGhlEmbedded || false;
     res.locals.activePage = '';
     res.locals.baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
     next();

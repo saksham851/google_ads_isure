@@ -35,6 +35,7 @@
                     </form>
                 <% } %>
 
+                <% if (!isGhlEmbedded) { %>
                 <a href="/auth/install<%= activeLocationId ? '?location_id=' + activeLocationId : '' %>" id="btn-connect-ghl" target="_top" class="btn btn-outline-primary d-inline-flex align-items-center gap-2">
                     <svg width="16" height="16" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <circle cx="20" cy="20" r="20" fill="#FF6B35"/>
@@ -42,6 +43,7 @@
                     </svg>
                     Connect via OAuth
                 </a>
+                <% } %>
                 <a href="/agencies/create" class="btn btn-primary d-inline-flex align-items-center gap-1">
                     <i class="ti ti-plus"></i> Add Manually
                 </a>
@@ -141,8 +143,12 @@
                                     <div style="color:#9aa0a6;">
                                         <i class="ti ti-building-store" style="font-size:48px;display:block;margin-bottom:12px;"></i>
                                         <p class="fw-semibold mb-1" style="color:#5f6368;">No sub-accounts yet</p>
+                                        <% if (!isGhlEmbedded) { %>
                                         <p class="mb-3" style="font-size:14px;">Click "Connect with GoHighLevel" to install the app in a sub-account.</p>
                                         <a href="/auth/install" target="_top" class="btn btn-primary btn-sm">Connect with GoHighLevel</a>
+                                        <% } else { %>
+                                        <p class="mb-3" style="font-size:14px;">Please wait while we sync your sub-account details.</p>
+                                        <% } %>
                                     </div>
                                 </td>
                             </tr>
