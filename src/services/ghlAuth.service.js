@@ -15,15 +15,18 @@ class GHLAuthService {
             const expiryDate = new Date();
             expiryDate.setSeconds(expiryDate.getSeconds() + expires_in);
 
-            // 2. Fetch sub-account name
+            // 2. Fetch sub-account details (including email)
             let subAccountName = 'Unknown Sub-account';
+            let subAccountEmail = null;
             try {
                 if (locationId) {
                     const locationData = await ghlIntegration.getLocationData(locationId, access_token);
                     subAccountName = locationData.location?.name || subAccountName;
+                    subAccountEmail = locationData.location?.email || null;
+                    logger.info(`[GHL] Fetched location data for ${locationId}: ${subAccountName} (${subAccountEmail})`);
                 }
             } catch (e) {
-                logger.warn(`Could not fetch sub-account name for LocationId: ${locationId}`);
+                logger.warn(`Could not fetch sub-account details for LocationId: ${locationId}: ${e.message}`);
             }
 
             // 3. Save or update agency in our Database
@@ -44,19 +47,25 @@ class GHLAuthService {
 
             // 4. Update User Mapping - Link this sub-account to the user
             if (locationId) {
-                let userEmail = sessionUser ? sessionUser.email : null;
+                // Priority 1: Use Location Email (what the user requested)
+                // Priority 2: Use session user email (if logged in)
+                // Priority 3: Fetch GHL User email (fallback)
+                let userEmail = subAccountEmail || (sessionUser ? sessionUser.email : null);
 
-                // Only fetch from GHL if we don't have a session user
                 if (!userEmail && userId) {
-                    userEmail = `ghl_${userId}@example.com`; // Fallback email
                     try {
                         const ghlUser = await ghlIntegration.getUserData(userId, companyId, access_token);
                         if (ghlUser && ghlUser.user && ghlUser.user.email) {
                             userEmail = ghlUser.user.email;
                         }
                     } catch (err) {
-                        logger.warn(`Could not fetch user details for userId: ${userId}. Using fallback mapping.`);
+                        logger.warn(`Could not fetch user details for userId: ${userId}.`);
                     }
+                }
+
+                // Final Fallback
+                if (!userEmail) {
+                    userEmail = `ghl_${userId || locationId}@example.com`;
                 }
 
                 if (userEmail) {
