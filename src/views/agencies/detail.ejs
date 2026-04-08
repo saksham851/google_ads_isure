@@ -137,10 +137,12 @@
                             <i class="ti ti-<%= googleConnected ? 'check' : 'x' %>"></i>
                             Google Ads <%= googleConnected ? 'Connected' : 'Not Connected' %>
                         </span>
+                        <% if (!isGhlEmbedded) { %>
                         <button class="btn btn-sm btn-outline-danger ms-2" onclick="deleteAgency(this)"
                             title="Delete Sub-account">
                             <i class="ti ti-trash"></i> Delete
                         </button>
+                        <% } %>
                     </div>
                 </div>
             </div>
@@ -159,7 +161,9 @@
                                 <span class="badge bg-success-subtle text-success px-3 py-2" style="font-size: 11px; border-radius: 6px; font-weight: 500;">
                                     <i class="ti ti-circle-check-filled me-1"></i> App Integrated via Marketplace
                                 </span>
+                                <% if (!isGhlEmbedded) { %>
                                 <button class="btn btn-sm btn-link text-danger p-0 text-decoration-none" style="font-size: 11px; font-weight: 600;" onclick="disconnectGHL()">Disconnect</button>
+                                <% } %>
                             </div>
                         <% } else { %>
                             <p class="text-muted mb-3" style="font-size:13px;">
@@ -172,11 +176,13 @@
                                         Token expires: <%= agency.ghlTokenExpiry ? new
                                             Date(agency.ghlTokenExpiry).toLocaleString() : 'Unknown' %>
                                     </span>
+                                    <% if (!isGhlEmbedded) { %>
                                     <div class="btn-group">
                                         <a href="/auth/install" target="_top" class="btn btn-sm btn-outline-secondary">Re-install</a>
                                         <button class="btn btn-sm btn-outline-danger"
                                             onclick="disconnectGHL()">Disconnect</button>
                                     </div>
+                                    <% } %>
                                 </div>
                             <% } else { %>
                                 <a href="/auth/install" id="btn-ghl-install" target="_top"

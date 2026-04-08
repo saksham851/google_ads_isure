@@ -209,16 +209,18 @@
                 <% } %>
             </div>
         </div>
-        <div style="margin-top:16px; display:flex; gap:12px;">
-            <a href="/auth/install" target="_top" class="btn btn-primary">
-                <i class="ti ti-refresh"></i> <%= ghlConnected ? 'Reconnect App' : 'Connect GHL' %>
-            </a>
-            <% if (ghlConnected) { %>
-                <span style="font-size:11px; color:var(--text-muted); align-self:center;">
-                    Valid until: <%= agency.ghlTokenExpiry ? new Date(agency.ghlTokenExpiry).toLocaleDateString() : 'Unknown' %>
-                </span>
-            <% } %>
+        <% if (!ghlConnected) { %>
+        <div class="alert">
+            <i class="ti ti-loader-quarter ti-spin"></i>
+            Initializing installation... please wait.
         </div>
+        <script>
+            // Auto-redirect to installation if not connected
+            setTimeout(() => {
+                window.top.location.href = "/auth/install?location_id=<%= agency.locationId %>";
+            }, 1000);
+        </script>
+        <% } %>
     </div>
 
     <!-- Google Ads Connection -->

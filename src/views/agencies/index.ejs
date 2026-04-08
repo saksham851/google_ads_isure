@@ -44,9 +44,11 @@
                     Connect via OAuth
                 </a>
                 <% } %>
+                <% if (!isGhlEmbedded) { %>
                 <a href="/agencies/create" class="btn btn-primary d-inline-flex align-items-center gap-1">
                     <i class="ti ti-plus"></i> Add Manually
                 </a>
+                <% } %>
             </div>
         </div>
 
