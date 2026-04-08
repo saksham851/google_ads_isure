@@ -39,6 +39,7 @@ class GHLAuthService {
                     ghlRefreshToken: refresh_token,
                     ghlTokenExpiry: expiryDate,
                     subAccountName: subAccountName,
+                    email: subAccountEmail,
                     agencyName: subAccountName, // Legacy fallback
                     isActive: true
                 },
