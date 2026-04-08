@@ -8,8 +8,6 @@ const userAuthController = {
         const locationId = req.query.locationId || req.query.location_id;
         if (req.session.user) return res.redirect(`/dashboard${locationId ? '?locationId=' + locationId : ''}`);
         res.render('auth/login', { 
-            error: req.flash('error'), 
-            success: req.flash('success'), 
             title: 'Login',
             locationId: locationId
         });
@@ -62,7 +60,7 @@ const userAuthController = {
 
     // GET /forgot-password
     forgotPasswordView: (req, res) => {
-        res.render('auth/forgot-password', { error: req.flash('error'), success: req.flash('success'), title: 'Forgot Password' });
+        res.render('auth/forgot-password', { title: 'Forgot Password' });
     },
 
     // POST /forgot-password
@@ -131,7 +129,7 @@ const userAuthController = {
             return res.redirect('/user/forgot-password');
         }
 
-        res.render('auth/reset-password', { token, error: req.flash('error'), searchTitle: 'Reset Password' });
+        res.render('auth/reset-password', { token, searchTitle: 'Reset Password' });
     },
 
     // POST /reset-password/:token
