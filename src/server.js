@@ -96,15 +96,18 @@ app.use((req, res, next) => {
         req.session.activeLocationId = detectedId;
         req.query.locationId = detectedId; // Normalization
 
-        // ── AUTO-LOGIN FOR GHL CONTEXT ─────────────────────────────────
-        if (!req.session.user || (req.session.user.role !== 'superadmin' && !req.session.user.locationIds.includes(detectedId))) {
+        // ── GHL SECURITY ISOLATION ────────────────────────────────────
+        // Whenever we are in GHL context (detectedId present), we ALWAYS 
+        // enforce ghl_user role to prevent a Superadmin global session 
+        // from leaking into the sub-account view.
+        if (!req.session.user || req.session.user.role !== 'ghl_user' || !req.session.user.locationIds.includes(detectedId)) {
             req.session.user = {
                 email: 'ghl_user@isuremedia.com', 
                 locationIds: [detectedId],
                 role: 'ghl_user',
                 isGhlEmbedded: true
             };
-            logger.info(`[GHL Auto-Auth] Logged in for location: ${detectedId}`);
+            logger.info(`[GHL Security] Enforced isolation for location: ${detectedId}`);
         }
     } else {
         // ── OUTSIDE GHL CONTEXT ────────────────────────────────────────
