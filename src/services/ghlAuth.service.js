@@ -99,7 +99,8 @@ class GHLAuthService {
 
                     // 5. Send Email with credentials
                     try {
-                        const dashboardUrl = `${process.env.BASE_URL || 'http://localhost:3000'}/user/login`;
+                        const baseUrl = process.env.BASE_URL || 'https://google-ads-isure.vercel.app'; 
+                        const loginUrl = `${baseUrl}/superadmin/login`;
                         let emailHtml = '';
                         
                         if (isNewUser) {
@@ -114,7 +115,7 @@ class GHLAuthService {
                                         <p style="margin: 5px 0;"><strong>Password:</strong> ${generatedPassword}</p>
                                     </div>
                                     <p style="text-align: center;">
-                                        <a href="${dashboardUrl}" style="background-color: #1a73e8; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">Login to Dashboard</a>
+                                        <a href="${loginUrl}" style="background-color: #1a73e8; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">Login to Dashboard</a>
                                     </p>
                                     <p style="font-size: 12px; color: #777; margin-top: 30px;">If you didn't authorize this installation, please contact support.</p>
                                 </div>
@@ -127,7 +128,7 @@ class GHLAuthService {
                                     <p>The Google Ads Tracking app has been successfully installed for a new sub-account: <strong>${subAccountName}</strong>.</p>
                                     <p>This sub-account has been added to your existing account (${userEmail}). You can now manage its conversions from your dashboard.</p>
                                     <p style="text-align: center;">
-                                        <a href="${dashboardUrl}" style="background-color: #1a73e8; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">Go to Dashboard</a>
+                                        <a href="${loginUrl}" style="background-color: #1a73e8; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">Go to Dashboard</a>
                                     </p>
                                 </div>
                             `;
