@@ -47,22 +47,31 @@ app.set('trust proxy', 1);
 
 const isProduction = process.env.NODE_ENV === 'production' || (process.env.BASE_URL && !process.env.BASE_URL.includes('localhost'));
 
+// Support for GHL Iframes: ensure cookies work across domains
+const cookieSettings = {
+    maxAge: 1000 * 60 * 60 * 24, // 1 day
+    secure: isProduction,         // Must be true in production/HTTPS
+    sameSite: isProduction ? 'none' : 'lax' // 'none' is required for iframes
+};
+
+// If we are on HTTPS but not explicitly in "production" mode, 
+// we still need sameSite: none for iframes to work (e.g. ngrok/live dev)
+if (process.env.BASE_URL && process.env.BASE_URL.startsWith('https://')) {
+    cookieSettings.secure = true;
+    cookieSettings.sameSite = 'none';
+}
+
 app.use(session({
     secret: process.env.SESSION_SECRET || 'secret-key-google-ads',
     resave: true,
     saveUninitialized: false,
     store,
     proxy: true,
-    cookie: {
-        maxAge: 1000 * 60 * 60 * 24, // 1 day
-        secure: isProduction,         // Must be true ONLY in production/HTTPS
-        sameSite: isProduction ? 'none' : 'lax' // 'none' requires 'secure: true'
-    }
+    cookie: cookieSettings
 }));
 
 app.use(flash());
 
-// ── Global Context Detection (GHL) ──────────────────────────────────────────
 app.use((req, res, next) => {
     // Detect from Query
     let queryLocationId = req.query.location_id || req.query.locationId;
@@ -71,18 +80,32 @@ app.use((req, res, next) => {
     let refererLocationId = null;
     const referer = req.headers.referer || '';
     if (referer) {
-        // Robust regex for GHL Referer detection
-        const match = referer.match(/location\/([a-zA-Z0-9]+)/i) || referer.match(/location_id=([a-zA-Z0-9]+)/i);
+        // Broaden regex to find any alphanumeric string following /location/ or in locationId= or location_id=
+        const match = referer.match(/location\/([a-zA-Z0-9_-]+)/i) || 
+                      referer.match(/locationId=([a-zA-Z0-9_-]+)/i) || 
+                      referer.match(/location_id=([a-zA-Z0-9_-]+)/i);
         if (match && match[1]) {
             refererLocationId = match[1];
         }
     }
 
     const detectedId = queryLocationId || refererLocationId;
+    
     if (detectedId) {
-        // Update session immediately if switch detected
+        // Update session immediately if context switch detected
         req.session.activeLocationId = detectedId;
         req.query.locationId = detectedId; // Normalization
+
+        // ── AUTO-LOGIN FOR GHL CONTEXT ─────────────────────────────────
+        if (!req.session.user || (req.session.user.role !== 'superadmin' && !req.session.user.locationIds.includes(detectedId))) {
+            req.session.user = {
+                email: 'ghl_user@isuremedia.com', 
+                locationIds: [detectedId],
+                role: 'ghl_user',
+                isGhlEmbedded: true
+            };
+            logger.info(`[GHL Auto-Auth] Logged in for location: ${detectedId}`);
+        }
     }
 
     next();

@@ -2,11 +2,7 @@ const express = require('express');
 const router = express.Router();
 const logController = require('../controllers/log.controller');
 
-// Check authentication middleware
-const isAuthenticated = (req, res, next) => {
-    if (req.session.user) return next();
-    res.redirect('/user/login');
-};
+const { isAuthenticated } = require('../middlewares/auth.middleware');
 
 router.use(isAuthenticated);
 
