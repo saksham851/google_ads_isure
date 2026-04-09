@@ -166,6 +166,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Public OAuth routes & Webhooks (no auth required)
 app.use('/auth', authRoutes);
 app.use('/webhooks', webhookRoutes);
+app.get('/launchpad', require('./controllers/agency.controller').ghlExtension);
 
 // Authenticated app routes
 app.use('/superadmin', userAuthRoutes); // Changed from /user
