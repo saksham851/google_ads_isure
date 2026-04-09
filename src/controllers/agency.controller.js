@@ -299,25 +299,9 @@ const agencyController = {
             // Context is now handled by global middleware in server.js
             const activeUser = req.session.ghlUser || req.session.user;
             
-            // ── INTELLIGENT LANDING ─────────────────────────────────────────
-            let agency = await Agency.findOne({ locationId });
-            
-            const ghlConnected = !!(agency?.ghlAccessToken);
-            const googleConnected = !!(agency?.googleRefreshToken);
-
-            if (ghlConnected && googleConnected && agency) {
-                // If everything is ready, show them the full dashboard
-                return res.redirect(`/dashboard?locationId=${locationId}`);
-            }
-
-            // Otherwise, show the setup screen (ghl-extension.ejs)
-            res.render('ghl-extension', {
-                title: 'Authentication Settings',
-                agency: agency || { locationId, agencyName: 'New Sub-account' },
-                ghlConnected,
-                googleConnected,
-                layout: false
-            });
+            // ── DIRECT TO DASHBOARD ─────────────────────────────────────────
+            // As requested, we now land the user directly on the stats dashboard.
+            return res.redirect(`/dashboard?locationId=${locationId}`);
         } catch (error) {
             console.error('[GHL Extension] Error:', error);
             res.status(500).send('Internal Server Error');
