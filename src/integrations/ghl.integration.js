@@ -16,7 +16,7 @@ class GHLIntegration {
             client_secret: this.clientSecret,
             grant_type: 'authorization_code',
             code: code,
-            redirect_uri: process.env.GHL_REDIRECT_URI || 'http://localhost:3000/auth/callback'
+            redirect_uri: process.env.GHL_REDIRECT_URI || `${process.env.BASE_URL}/auth/callback`
         });
 
         const response = await axios.post(`${this.apiBaseUrl}/oauth/token`, data, {
