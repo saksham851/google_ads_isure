@@ -77,9 +77,9 @@ exports.googleCallback = async (req, res, next) => {
         if (req.session && req.session.user) {
             req.flash('success', `Google Ads connected for ${agency.agencyName}! Now select your Manager Account below.`);
             
-            // If we are in GHL context, redirect back to GHL dashboard
+            // If we are in GHL context, redirect back to GHL app page
             if (req.session.user.isGhlEmbedded) {
-                return res.redirect(`https://app.gohighlevel.com/v2/location/${locationId}/dashboard`);
+                return res.redirect(`https://app.gohighlevel.com/v2/location/${locationId}/custom-page-link/69ce05e3701f10ef85d0b155`);
             }
             
             return res.redirect(`/agencies/${locationId}/detail`);
@@ -106,9 +106,9 @@ exports.googleCallback = async (req, res, next) => {
                     <h2>Google Ads Connected!</h2>
                     <p>Agency: <strong>${agency.agencyName}</strong></p>
                     <p>Go back to your GoHighLevel dashboard to select your Manager Account and Conversion Actions.</p>
-                    <a href="https://app.gohighlevel.com/v2/location/${locationId}/dashboard" 
+                    <a href="https://app.gohighlevel.com/v2/location/${locationId}/custom-page-link/69ce05e3701f10ef85d0b155" 
                        style="display: inline-block; margin-top: 20px; padding: 12px 24px; background: #1a73e8; color: #fff; text-decoration: none; border-radius: 8px; font-weight: bold;">
-                        Back to GoHighLevel
+                        Back to App Settings
                     </a>
                 </div>
             </body>
