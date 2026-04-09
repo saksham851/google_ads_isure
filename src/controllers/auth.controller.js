@@ -44,10 +44,11 @@ exports.callback = async (req, res, next) => {
         const agency = await ghlAuthService.handleCallback(code, req.session?.user);
         logger.info(`[GHL] App installed for Agency/Location: ${agency.agencyId} (${agency.locationId})`);
 
-        // Determine redirect target (Specific App Page in GHL or fallback)
+        // Determine redirect target (Specific App Page in GHL or fallback to our dashboard)
+        const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
         const redirectUrl = agency.locationId 
             ? `https://app.gohighlevel.com/v2/location/${agency.locationId}/custom-page-link/69ce05e3701f10ef85d0b155`
-            : `https://app.gohighlevel.com/v2/settings/marketplace/installed_apps`;
+            : `${baseUrl}/dashboard`;
 
         if (req.session && req.session.user) {
             req.flash('success', `GoHighLevel connected successfully for: ${agency.agencyName}`);
