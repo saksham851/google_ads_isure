@@ -106,6 +106,16 @@ app.use((req, res, next) => {
             };
             logger.info(`[GHL Auto-Auth] Logged in for location: ${detectedId}`);
         }
+    } else {
+        // ── OUTSIDE GHL CONTEXT ────────────────────────────────────────
+        // If we are NOT in GHL but have a ghl_user session, clear it.
+        // This ensures sub-account users can't access the app outside GHL 
+        // and keeps the login screen available for superadmins.
+        if (req.session.user && req.session.user.role === 'ghl_user') {
+            req.session.user = null;
+            req.session.activeLocationId = null;
+            logger.info(`[GHL Auth] Cleared ghl_user session - accessed outside of iframe.`);
+        }
     }
 
     next();
