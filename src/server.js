@@ -97,16 +97,11 @@ app.use((req, res, next) => {
         req.query.locationId = detectedId; // Normalization
 
         // ── GHL SECURITY ISOLATION ────────────────────────────────────
-        // Only enforce ghl_user auto-session if:
-        // 1. No user is logged in
-        // 2. OR the current user is a ghl_user (isolation check)
-        // 3. AND we are NOT on the login page (avoid trapping superadmins)
-        const isLoginPage = req.path.startsWith('/user/login');
-        
-        const shouldEnforceGhlSession = !isLoginPage && (
-            !req.session.user || 
-            (req.session.user.role === 'ghl_user' && !req.session.user.locationIds.includes(detectedId))
-        );
+        // Whenever we are in GHL context (detectedId present), we enforce 
+        // ghl_user role UNLESS a Superadmin is already logged in. 
+        // This ensures GHL users are auto-logged in without a form, 
+        // while Superadmins can keep their session if they navigate here.
+        const shouldEnforceGhlSession = !req.session.user || (req.session.user.role === 'ghl_user' && !req.session.user.locationIds.includes(detectedId));
 
         if (shouldEnforceGhlSession && (!req.session.user || req.session.user.role !== 'superadmin')) {
             req.session.user = {
