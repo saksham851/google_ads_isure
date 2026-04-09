@@ -3,7 +3,7 @@ const router     = express.Router();
 const ctrl       = require('../controllers/agency.controller');
 const { isAuthenticated } = require('../middlewares/auth.middleware');
 
-router.get('/ghl-extension', ctrl.ghlExtension);
+router.get('/launchpad', ctrl.ghlExtension);
 router.use(isAuthenticated);
 
 router.get('/',                         ctrl.index);

@@ -275,19 +275,9 @@ const agencyController = {
             }
 
             // ── AUTO-SESSION FOR GHL ───────────────────────────────────────────
-            if (locationId) req.session.activeLocationId = locationId;
-
-            if (!req.session.user) {
-                req.session.user = { 
-                    locationIds: [locationId], 
-                    role: 'ghl_user',
-                    isGhlEmbedded: true 
-                };
-            } else {
-                // If user already has a session, ensure this flag is set
-                req.session.user.isGhlEmbedded = true;
-            }
-
+            // Context is now handled by global middleware in server.js
+            const activeUser = req.session.ghlUser || req.session.user;
+            
             let agency = await Agency.findOne({ locationId });
             
             // If the agency exists and is fully connected, we can redirect to detail page

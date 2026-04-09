@@ -43,7 +43,7 @@ const isUser = (req, res, next) => {
         return next();
     }
     req.flash('error', 'Access denied.');
-    res.redirect('/user/login');
+    res.redirect('/superadmin/login');
 };
 
 module.exports = { isAuthenticated, isSuperadmin, isUser };
