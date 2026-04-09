@@ -24,6 +24,9 @@
                 <!-- Search bar for superadmins -->
                 <% if (typeof user !== 'undefined' && user.role === 'superadmin') { %>
                     <form action="/agencies" method="GET" class="d-flex gap-1 me-2">
+                        <% if (typeof activeLocationId !== 'undefined' && activeLocationId) { %>
+                            <input type="hidden" name="locationId" value="<%= activeLocationId %>">
+                        <% } %>
                         <div class="input-group input-group-sm" style="width: 200px;">
                             <span class="input-group-text bg-white border-end-0"><i class="ti ti-search text-muted"></i></span>
                             <input type="text" name="search" class="form-control ps-0 border-start-0" placeholder="Search accounts..." value="<%= typeof search !== 'undefined' ? search : '' %>">
@@ -114,7 +117,7 @@
                                 <td class="py-3 text-center">
                                     <div class="d-flex justify-content-center gap-1">
                                         <% if (agency.locationId) { %>
-                                        <a href="/agencies/<%= agency.locationId %>/detail" 
+                                        <a href="/agencies/<%= agency.locationId %>/detail?locationId=<%= agency.locationId %>" 
                                            class="btn btn-sm d-inline-flex align-items-center gap-1"
                                            style="background:#e8f0fe;color:#1a73e8;border:none;border-radius:6px;font-size:12px;font-weight:500;padding:5px 12px;">
                                             <i class="ti ti-settings" style="font-size:13px;"></i> Configure
@@ -155,7 +158,7 @@
                         <nav>
                             <ul class="pagination pagination-sm mb-0 gap-1">
                                 <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
-                                    <a class="page-link border-0 rounded-circle" href="/agencies?page=<%= currentPage - 1 %>&search=<%= typeof search !== 'undefined' ? search : '' %>">
+                                    <a class="page-link border-0 rounded-circle" href="/agencies?page=<%= currentPage - 1 %>&search=<%= typeof search !== 'undefined' ? search : '' %><%= typeof activeLocationId !== 'undefined' && activeLocationId ? '&locationId=' + activeLocationId : '' %>">
                                         <i class="ti ti-chevron-left"></i>
                                     </a>
                                 </li>
@@ -163,12 +166,12 @@
                                 <% for(let i = 1; i <= totalPages; i++) { %>
                                     <li class="page-item <%= currentPage === i ? 'active' : '' %>">
                                         <a class="page-link border-0 rounded-circle <%= currentPage === i ? 'bg-primary text-white' : 'text-dark' %>" 
-                                           href="/agencies?page=<%= i %>&search=<%= typeof search !== 'undefined' ? search : '' %>"><%= i %></a>
+                                           href="/agencies?page=<%= i %>&search=<%= typeof search !== 'undefined' ? search : '' %><%= typeof activeLocationId !== 'undefined' && activeLocationId ? '&locationId=' + activeLocationId : '' %>"><%= i %></a>
                                     </li>
                                 <% } %>
 
                                 <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
-                                    <a class="page-link border-0 rounded-circle" href="/agencies?page=<%= currentPage + 1 %>&search=<%= typeof search !== 'undefined' ? search : '' %>">
+                                    <a class="page-link border-0 rounded-circle" href="/agencies?page=<%= currentPage + 1 %>&search=<%= typeof search !== 'undefined' ? search : '' %><%= typeof activeLocationId !== 'undefined' && activeLocationId ? '&locationId=' + activeLocationId : '' %>">
                                         <i class="ti ti-chevron-right"></i>
                                     </a>
                                 </li>

@@ -89,7 +89,14 @@ app.use((req, res, next) => {
         }
     }
 
-    const detectedId = queryLocationId || refererLocationId;
+    // 3. Detect from Path (e.g. /agencies/LOCATION_ID/detail)
+    let pathLocationId = null;
+    const pathMatch = req.path.match(/^\/agencies\/([a-zA-Z0-9_-]+)/i);
+    if (pathMatch && pathMatch[1] && !['create', 'launchpad'].includes(pathMatch[1])) {
+        pathLocationId = pathMatch[1];
+    }
+
+    const detectedId = queryLocationId || refererLocationId || pathLocationId;
     
     if (detectedId) {
         // ── GHL SECURITY ISOLATION ────────────────────────────────────
@@ -106,8 +113,11 @@ app.use((req, res, next) => {
         logger.info(`[GHL Security] Enforced isolated session for location: ${detectedId}`);
     } else {
         // ── OUTSIDE GHL CONTEXT ────────────────────────────────────────
-        // If we are NOT in GHL, clear the ghlUser session so we can fall back to adminUser.
-        if (req.session.ghlUser) {
+        // If we are NOT in GHL, check if this is an internal navigation.
+        // We only clear the ghlUser session if the entry is from an external source or direct access.
+        const isInternal = referer && (referer.includes(req.get('host')) || (process.env.BASE_URL && referer.includes(process.env.BASE_URL.replace(/^https?:\/\//, ''))));
+        
+        if (!isInternal && req.session.ghlUser) {
             req.session.ghlUser = null;
             req.session.activeLocationId = null;
             logger.info(`[GHL Auth] Cleared ghlUser session - accessed outside of iframe.`);
