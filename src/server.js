@@ -97,13 +97,11 @@ app.use((req, res, next) => {
         req.query.locationId = detectedId; // Normalization
 
         // ── GHL SECURITY ISOLATION ────────────────────────────────────
-        // Whenever we are in GHL context (detectedId present), we enforce 
-        // ghl_user role UNLESS a Superadmin is already logged in. 
-        // This ensures GHL users are auto-logged in without a form, 
-        // while Superadmins can keep their session if they navigate here.
-        const shouldEnforceGhlSession = !req.session.user || (req.session.user.role === 'ghl_user' && !req.session.user.locationIds.includes(detectedId));
-
-        if (shouldEnforceGhlSession && (!req.session.user || req.session.user.role !== 'superadmin')) {
+        // Whenever we are in GHL context (detectedId present), we ALWAYS
+        // enforce the ghl_user role for this specific location.
+        // This ensures the GHL iframe experience is isolated and unique,
+        // even if a Superadmin is logged in on the same browser session.
+        if (!req.session.user || req.session.user.role !== 'ghl_user' || !req.session.user.locationIds.includes(detectedId)) {
             req.session.user = {
                 email: 'ghl_user@isuremedia.com', 
                 locationIds: [detectedId],
