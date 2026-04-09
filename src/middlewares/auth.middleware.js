@@ -23,11 +23,11 @@ const isAuthenticated = (req, res, next) => {
 
     // 3. Normal page request: Store original URL and redirect to login
     // Note: GHL users should have already been auto-logged by the global middleware in server.js
-    if (req.originalUrl && !req.originalUrl.includes('/user/login')) {
+    if (req.originalUrl && !req.originalUrl.includes('/superadmin/login')) {
         req.session.returnTo = req.originalUrl;
     }
     
-    res.redirect('/user/login');
+    res.redirect('/superadmin/login');
 };
 
 const isSuperadmin = (req, res, next) => {

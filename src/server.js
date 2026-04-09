@@ -92,33 +92,25 @@ app.use((req, res, next) => {
     const detectedId = queryLocationId || refererLocationId;
     
     if (detectedId) {
-        // Update session immediately if context switch detected
-        req.session.activeLocationId = detectedId;
-        req.query.locationId = detectedId; // Normalization
-
         // ── GHL SECURITY ISOLATION ────────────────────────────────────
-        // Whenever we are in GHL context (detectedId present), we ALWAYS
-        // enforce the ghl_user role for this specific location.
-        // This ensures the GHL iframe experience is isolated and unique,
-        // even if a Superadmin is logged in on the same browser session.
-        if (!req.session.user || req.session.user.role !== 'ghl_user' || !req.session.user.locationIds.includes(detectedId)) {
-            req.session.user = {
-                email: 'ghl_user@isuremedia.com', 
-                locationIds: [detectedId],
-                role: 'ghl_user',
-                isGhlEmbedded: true
-            };
-            logger.info(`[GHL Security] Enforced isolation for location: ${detectedId}`);
-        }
+        // Whenever we are in GHL context, we use a separate ghlUser session key.
+        // This prevents the Superadmin session from being overwritten.
+        req.session.ghlUser = {
+            email: 'ghl_user@isuremedia.com', 
+            locationIds: [detectedId],
+            role: 'ghl_user',
+            isGhlEmbedded: true
+        };
+        req.session.activeLocationId = detectedId;
+        req.query.locationId = detectedId;
+        logger.info(`[GHL Security] Enforced isolated session for location: ${detectedId}`);
     } else {
         // ── OUTSIDE GHL CONTEXT ────────────────────────────────────────
-        // If we are NOT in GHL but have a ghl_user session, clear it.
-        // This ensures sub-account users can't access the app outside GHL 
-        // and keeps the login screen available for superadmins.
-        if (req.session.user && req.session.user.role === 'ghl_user') {
-            req.session.user = null;
+        // If we are NOT in GHL, clear the ghlUser session so we can fall back to adminUser.
+        if (req.session.ghlUser) {
+            req.session.ghlUser = null;
             req.session.activeLocationId = null;
-            logger.info(`[GHL Auth] Cleared ghl_user session - accessed outside of iframe.`);
+            logger.info(`[GHL Auth] Cleared ghlUser session - accessed outside of iframe.`);
         }
     }
 
@@ -127,13 +119,21 @@ app.use((req, res, next) => {
 
 // ── Global view locals ────────────────────────────────────────────────────────
 app.use((req, res, next) => {
+    // Priority: GHL Session > Admin Session
+    const activeUser = req.session.ghlUser || req.session.adminUser || null;
+    
     res.locals.error = req.flash('error');
     res.locals.success = req.flash('success');
-    res.locals.user = req.session.user || null;
+    res.locals.user = activeUser;
+    res.locals.adminUser = req.session.adminUser || null; // For admin-only UI elements
     res.locals.activeLocationId = req.session.activeLocationId || null;
-    res.locals.isGhlEmbedded = req.session.user?.isGhlEmbedded || false;
+    res.locals.isGhlEmbedded = !!req.session.ghlUser;
     res.locals.activePage = '';
     res.locals.baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+    
+    // Virtual req.session.user for compatibility with existing code/middlewares
+    req.session.user = activeUser;
+    
     next();
 });
 
@@ -168,7 +168,7 @@ app.use('/auth', authRoutes);
 app.use('/webhooks', webhookRoutes);
 
 // Authenticated app routes
-app.use('/user', userAuthRoutes);
+app.use('/superadmin', userAuthRoutes); // Changed from /user
 app.use('/agencies', agencyRoutes);
 app.use('/users', adminUserRoutes);
 app.use('/', logRoutes);
@@ -178,8 +178,8 @@ app.use('/google-ads', googleAdsRoutes);
 
 // ── Dashboard & Root ──────────────────────────────────────────────────────────
 app.get('/', (req, res) => {
-    if (req.session.user) return res.redirect('/dashboard');
-    res.redirect('/user/login');
+    if (req.session.ghlUser || req.session.adminUser) return res.redirect('/dashboard');
+    res.redirect('/superadmin/login');
 });
 
 app.get('/dashboard', isAuthenticated, dashboardController.index);

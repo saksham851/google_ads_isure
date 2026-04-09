@@ -6,7 +6,7 @@ const userAuthController = {
     // GET /login
     loginView: (req, res) => {
         const locationId = req.query.locationId || req.query.location_id;
-        if (req.session.user) return res.redirect(`/dashboard${locationId ? '?locationId=' + locationId : ''}`);
+        if (req.session.adminUser) return res.redirect(`/dashboard${locationId ? '?locationId=' + locationId : ''}`);
         res.render('auth/login', { 
             title: 'Login',
             locationId: locationId
@@ -17,25 +17,24 @@ const userAuthController = {
     login: async (req, res) => {
         try {
             const { email, password } = req.body;
-            console.log(`[Auth] Attempting login for: ${email}`);
+            console.log(`[Auth] Attempting admin login for: ${email}`);
             
             const user = await User.findOne({ email });
 
             if (!user || !(await user.comparePassword(password))) {
-                console.log(`[Auth] Failed login for: ${email}`);
+                console.log(`[Auth] Failed admin login for: ${email}`);
                 req.flash('error', 'Invalid email or password');
-                return res.redirect('/user/login');
+                return res.redirect('/superadmin/login');
             }
 
             // Only allow Superadmins to login manually via this form
-            // Normal users/ghl users should access the app via GHL context (auto-login)
             if (user.role !== 'superadmin') {
                 console.log(`[Auth] Blocked login for non-admin user: ${email}`);
                 req.flash('error', 'Only administrators can access this area.');
-                return res.redirect('/user/login');
+                return res.redirect('/superadmin/login');
             }
 
-            req.session.user = {
+            req.session.adminUser = {
                 id: user._id,
                 email: user.email,
                 role: user.role,
@@ -47,23 +46,22 @@ const userAuthController = {
             const redirectUrl = req.session.returnTo || `/dashboard${locationId ? '?locationId=' + locationId : ''}`;
             delete req.session.returnTo;
             
-            console.log(`[Auth] Successful login: ${email}. Redirecting to: ${redirectUrl}`);
+            console.log(`[Auth] Successful admin login: ${email}. Redirecting to: ${redirectUrl}`);
             res.redirect(redirectUrl);
         } catch (error) {
             console.error('[Auth] Login error:', error);
             const locationId = req.body.locationId;
             req.flash('error', 'Something went wrong');
-            res.redirect(`/user/login${locationId ? '?locationId=' + locationId : ''}`);
+            res.redirect(`/superadmin/login${locationId ? '?locationId=' + locationId : ''}`);
         }
     },
 
     // GET /logout
     logout: (req, res) => {
-        const locationId = req.session.activeLocationId || (req.session.user && req.session.user.locationId);
-        req.session.destroy((err) => {
-            if (err) console.error('[Auth] Logout session error:', err);
-            res.redirect(`/user/login${locationId ? '?locationId=' + locationId : ''}`);
-        });
+        const locationId = req.session.activeLocationId || (req.session.adminUser && req.session.adminUser.locationId);
+        req.session.adminUser = null; // Clear primary admin session
+        req.session.ghlUser = null;   // Clear GHL session too on explicit logout
+        res.redirect(`/superadmin/login${locationId ? '?locationId=' + locationId : ''}`);
     },
 
     // GET /forgot-password
@@ -75,18 +73,11 @@ const userAuthController = {
     forgotPassword: async (req, res) => {
         try {
             const { email } = req.body;
-            console.log('--- Forgot Password Request ---');
-            console.log('Email:', email);
-            console.log('MAIL_HOST:', process.env.MAIL_HOST);
-            console.log('MAIL_PORT:', process.env.MAIL_PORT);
-            console.log('MAIL_USERNAME:', process.env.MAIL_USERNAME);
-
             const user = await User.findOne({ email });
 
             if (!user) {
-                console.log('User not found in DB');
                 req.flash('success', 'If an account exists with that email, a reset link has been sent.');
-                return res.redirect('/user/forgot-password');
+                return res.redirect('/superadmin/forgot-password');
             }
 
             // Create reset token
@@ -94,10 +85,9 @@ const userAuthController = {
             user.resetToken = token;
             user.resetTokenExpiry = Date.now() + 3600000; // 1 hour
             await user.save();
-            console.log('Reset token generated and saved');
 
             // Send email
-            const resetUrl = `${req.protocol}://${req.get('host')}/reset-password/${token}`;
+            const resetUrl = `${req.protocol}://${req.get('host')}/superadmin/reset-password/${token}`;
             const template = `
                 <h2>Password Reset Request</h2>
                 <p>Hello,</p>
@@ -113,14 +103,12 @@ const userAuthController = {
                 html: template
             });
 
-            console.log('Email sent successfully!');
             req.flash('success', 'A reset link has been sent to your email.');
-            res.redirect('/user/forgot-password');
+            res.redirect('/superadmin/forgot-password');
         } catch (error) {
-            console.error('--- Forgot Password Error ---');
-            console.error(error);
-            req.flash('error', 'Something went wrong while sending the email.');
-            res.redirect('/user/forgot-password');
+            console.error('Forgot Password Error:', error);
+            req.flash('error', 'Something went wrong');
+            res.redirect('/superadmin/forgot-password');
         }
     },
 
@@ -134,7 +122,7 @@ const userAuthController = {
 
         if (!user) {
             req.flash('error', 'Token is invalid or has expired');
-            return res.redirect('/user/forgot-password');
+            return res.redirect('/superadmin/forgot-password');
         }
 
         res.render('auth/reset-password', { token, searchTitle: 'Reset Password' });
@@ -148,7 +136,7 @@ const userAuthController = {
 
             if (password !== confirmPassword) {
                 req.flash('error', 'Passwords do not match');
-                return res.redirect(`/user/reset-password/${token}`);
+                return res.redirect(`/superadmin/reset-password/${token}`);
             }
 
             const user = await User.findOne({
@@ -158,7 +146,7 @@ const userAuthController = {
 
             if (!user) {
                 req.flash('error', 'Token is invalid or has expired');
-                return res.redirect('/user/forgot-password');
+                return res.redirect('/superadmin/forgot-password');
             }
 
             user.password = password;
@@ -167,7 +155,7 @@ const userAuthController = {
             await user.save();
 
             req.flash('success', 'Password reset successful! You can now login.');
-            res.redirect('/user/login');
+            res.redirect('/superadmin/login');
         } catch (error) {
             console.error('Reset password error:', error);
             req.flash('error', 'Something went wrong');
