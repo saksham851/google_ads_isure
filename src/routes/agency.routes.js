@@ -10,6 +10,7 @@ router.get('/',                         ctrl.index);
 router.get('/create',                   ctrl.createView);
 router.post('/',                        ctrl.store);
 router.get('/:locationId/detail',       ctrl.detail);
+router.get('/:locationId/settings',     ctrl.settingsView);
 router.post('/:locationId/disconnect-ghl', ctrl.disconnectGHL);
 router.delete('/:locationId',           ctrl.deleteAgency);
 router.post('/:locationId/webhooks',    ctrl.addWebhook);

@@ -129,6 +129,27 @@ const agencyController = {
         });
     },
 
+    settingsView: async (req, res) => {
+        try {
+            const locationId = req.params.locationId;
+            let agency = await Agency.findOne({ locationId });
+            
+            const ghlConnected = !!(agency?.ghlAccessToken);
+            const googleConnected = !!(agency?.googleRefreshToken);
+
+            res.render('ghl-extension', {
+                title: 'Authentication Settings',
+                agency: agency || { locationId, agencyName: 'New Sub-account' },
+                ghlConnected,
+                googleConnected,
+                layout: false // This view has its own standalone layout
+            });
+        } catch (error) {
+            console.error('[Settings View] Error:', error);
+            res.status(500).send('Internal Server Error');
+        }
+    },
+
     // ─────────────────────────────────────────────────────────────────
     // POST /agencies
     // Manual agency creation 
@@ -278,27 +299,10 @@ const agencyController = {
             // Context is now handled by global middleware in server.js
             const activeUser = req.session.ghlUser || req.session.user;
             
-            let agency = await Agency.findOne({ locationId });
-            
-            // If the agency exists and is fully connected, we can redirect to detail page
-            // Otherwise show the setup screen (ghl-extension.ejs)
-            const ghlConnected = !!(agency?.ghlAccessToken);
-            const googleConnected = !!(agency?.googleRefreshToken);
-
-            if (ghlConnected && googleConnected && agency) {
-                // If everything is ready, show them the full dashboard (detail view)
-                // but we use the detail template logic
-                return res.redirect(`/agencies/${locationId}/detail`);
-            }
-
-            // Otherwise, show the basic extension/onboarding screen
-            res.render('ghl-extension', {
-                title: 'Authentication Settings',
-                agency: agency || { locationId, agencyName: 'New Sub-account' },
-                ghlConnected,
-                googleConnected,
-                layout: false
-            });
+            // ── DIRECT TO DASHBOARD ─────────────────────────────────────────
+            // As requested, we now land the user directly on the stats dashboard.
+            // They can navigate to specific settings or logs from the sidebar.
+            return res.redirect(`/dashboard?locationId=${locationId}`);
         } catch (error) {
             console.error('[GHL Extension] Error:', error);
             res.status(500).send('Internal Server Error');
