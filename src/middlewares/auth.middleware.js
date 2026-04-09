@@ -29,10 +29,34 @@ const isAuthenticated = (req, res, next) => {
         req.query.locationId = req.session.activeLocationId;
     }
 
-    // 1. Check if user is authenticated
-    if (req.session && req.session.user) return next();
+    // 1. Check if user is already authenticated
+    if (req.session && req.session.user) {
+        // If it's a superadmin, they have access to everything, so just proceed
+        if (req.session.user.role === 'superadmin') return next();
+
+        // If it's a GHL user/normal user and we have a detected ID, ensure context matches
+        if (detectedId && !req.session.user.locationIds.includes(detectedId)) {
+            // Context switch: Update the sub-account session
+            req.session.user.locationIds = [detectedId];
+            req.session.activeLocationId = detectedId;
+        }
+        return next();
+    }
+
+    // 2. AUTO-LOGIN FOR GHL CONTEXT: 
+    // If we have a detected locationId, create a virtual session to bypass login screen
+    if (detectedId) {
+        req.session.user = {
+            email: 'ghl_user@isuremedia.com', // Placeholder for UI
+            locationIds: [detectedId],
+            role: 'ghl_user',
+            isGhlEmbedded: true
+        };
+        req.session.activeLocationId = detectedId;
+        return next();
+    }
     
-    // 2. IMPORTANT: If it's an AJAX/JSON request (used by buttons), return 401 instead of redirecting
+    // 3. IMPORTANT: If it's an AJAX/JSON request (used by buttons), return 401 instead of redirecting
     // This prevents buttons from doing nothing when the session expires inside GHL iframes
     const isAjax = req.xhr || (req.headers.accept && req.headers.accept.includes('json'));
     if (isAjax) {
@@ -42,7 +66,7 @@ const isAuthenticated = (req, res, next) => {
         });
     }
 
-    // 3. Normal page request: Store original URL and redirect to login
+    // 4. Normal page request: Store original URL and redirect to login
     if (req.originalUrl && !req.originalUrl.includes('/user/login')) {
         req.session.returnTo = req.originalUrl;
     }

@@ -27,6 +27,14 @@ const userAuthController = {
                 return res.redirect('/user/login');
             }
 
+            // Only allow Superadmins to login manually via this form
+            // Normal users/ghl users should access the app via GHL context (auto-login)
+            if (user.role !== 'superadmin') {
+                console.log(`[Auth] Blocked login for non-admin user: ${email}`);
+                req.flash('error', 'Only administrators can access this area.');
+                return res.redirect('/user/login');
+            }
+
             req.session.user = {
                 id: user._id,
                 email: user.email,
