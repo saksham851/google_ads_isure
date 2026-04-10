@@ -13,7 +13,10 @@ const isAuthenticated = (req, res, next) => {
 
     // 2. IMPORTANT: If it's an AJAX/JSON request (used by buttons), return 401 instead of redirecting
     // This prevents buttons from doing nothing when the session expires inside GHL iframes
-    const isAjax = req.xhr || (req.headers.accept && req.headers.accept.includes('json'));
+    const isAjax = req.xhr || 
+                  (req.headers.accept && req.headers.accept.includes('json')) ||
+                  (req.headers['content-type'] && req.headers['content-type'].includes('json'));
+
     if (isAjax) {
         return res.status(401).json({ 
             success: false, 

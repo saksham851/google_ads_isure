@@ -80,8 +80,9 @@ app.use((req, res, next) => {
     let refererLocationId = null;
     const referer = req.headers.referer || '';
     if (referer) {
-        // Broaden regex to find any alphanumeric string following /location/ or in locationId= or location_id=
+        // Broaden regex to find any alphanumeric string following /location/, /agencies/ or in locationId= or location_id=
         const match = referer.match(/location\/([a-zA-Z0-9_-]+)/i) || 
+                      referer.match(/agencies\/([a-zA-Z0-9_-]+)/i) ||
                       referer.match(/locationId=([a-zA-Z0-9_-]+)/i) || 
                       referer.match(/location_id=([a-zA-Z0-9_-]+)/i);
         if (match && match[1]) {

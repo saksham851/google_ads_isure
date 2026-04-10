@@ -1043,9 +1043,12 @@
             if (statusDiv) statusDiv.innerHTML = `<i class="ti ti-loader-2 me-1"></i> ${isClear ? 'Clearing...' : 'Saving...'}`;
 
             try {
-                let r = await fetch('/google-ads/save-credentials', {
+                let r = await fetch(`/google-ads/save-credentials?locationId=${locationId}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
                     body: JSON.stringify(payload)
                 });
                 r = await handleResponse(r);
@@ -1177,9 +1180,12 @@
             statusDiv.innerHTML = '<i class="ti ti-loader-2 me-1"></i> Saving...';
 
             try {
-                let r = await fetch('/google-ads/save-mapping', {
+                let r = await fetch(`/google-ads/save-mapping?locationId=${locationId}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
                     body: JSON.stringify({ locationId, mccId, mccName, customerId, customerName: custName, conversionMappings: mappings })
                 });
                 r = await handleResponse(r);
@@ -1248,7 +1254,10 @@
             try {
                 let r = await fetch(`/agencies/${LOCATION_ID_FOR_WH}/webhooks`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
                     body: JSON.stringify({ name })
                 });
                 r = await handleResponse(r);
@@ -1325,7 +1334,10 @@
 
             btn.disabled = true;
             try {
-                let r = await fetch(`/agencies/${locationId}/webhooks/${slug}`, { method: 'DELETE' });
+                let r = await fetch(`/agencies/${locationId}/webhooks/${slug}`, { 
+                    method: 'DELETE',
+                    headers: { 'Accept': 'application/json' }
+                });
                 r = await handleResponse(r);
                 const data = await r.json();
                 if (!data.success) throw new Error(data.error);
@@ -1360,7 +1372,10 @@
                 if (result.isConfirmed) {
                     if (btn) btn.disabled = true;
                     try {
-                        let r = await fetch(`/agencies/${locationId}/disconnect-ghl`, { method: 'POST' });
+                        let r = await fetch(`/agencies/${locationId}/disconnect-ghl`, { 
+                            method: 'POST',
+                            headers: { 'Accept': 'application/json' }
+                        });
                         r = await handleResponse(r);
                         const d = await r.json();
                         if (d.success) location.reload();
@@ -1385,7 +1400,10 @@
                 if (result.isConfirmed) {
                     if (btn) btn.disabled = true;
                     try {
-                        let r = await fetch(`/agencies/${locationId}`, { method: 'DELETE' });
+                        let r = await fetch(`/agencies/${locationId}`, { 
+                            method: 'DELETE',
+                            headers: { 'Accept': 'application/json' }
+                        });
                         r = await handleResponse(r);
                         const d = await r.json();
                         if (d.success) window.location.href = '/agencies';
@@ -1422,7 +1440,10 @@
             try {
                 let r = await fetch(`/agencies/${locationId}/webhooks/${slug}/mapping`, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
                     body: JSON.stringify({ mappingId })
                 });
                 r = await handleResponse(r);
