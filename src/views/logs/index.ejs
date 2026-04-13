@@ -76,7 +76,18 @@
                         </thead>
                         <tbody>
                             <% logs.forEach(log => { %>
-                            <tr class="transition-all">
+                            <tr class="transition-all conversion-row" style="cursor: pointer;" 
+                                data-payload='<%= JSON.stringify({ 
+                                    gclid: log.gclid, 
+                                    conversionAction: log.conversionAction, 
+                                    conversionTime: log.conversionTime, 
+                                    conversionValue: log.conversionValue,
+                                    status: log.status,
+                                    googleAdsResponse: log.googleAdsResponse || null,
+                                    errorMessage: log.errorMessage || null
+                                }) %>'
+                                data-account="<%= log.agencyId ? log.agencyId.agencyName : 'Unknown' %>"
+                                data-time="<%= new Date(log.createdAt).toLocaleString() %>">
                                 <td class="px-4 py-3 fw-bold text-dark"><%= log.agencyId ? log.agencyId.agencyName : 'Unknown' %></td>
                                 <td><span class="text-secondary"><%= log.leadId ? log.leadId.email : 'N/A' %></span></td>
                                 <td>
@@ -145,3 +156,75 @@
     .transition-all:hover { background-color: #f8f9fa !important; transform: translateY(-1px); }
     .border-start-4 { border-left-width: 4px !important; }
 </style>
+
+<!-- Conversion Details Modal -->
+<div class="modal fade" id="conversionDetailsModal" tabindex="-1" aria-labelledby="conversionDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
+            <div class="modal-header bg-white border-bottom-0 pt-4 px-4 pb-2">
+                <div>
+                    <h5 class="modal-title fw-bold text-dark" id="conversionDetailsModalLabel">Google Ads Conversion Data</h5>
+                    <p class="text-muted small mb-0">Account: <span id="modalAccount" class="text-primary fw-medium"></span> &bull; Processed at <span id="modalTime" class="fw-medium text-dark"></span></p>
+                </div>
+                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="position-relative">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="badge bg-light text-dark border text-uppercase" style="font-size: 10px; letter-spacing: 0.5px;">Transmission Details</span>
+                        <button class="btn btn-sm btn-light border-0 py-1 px-2 rounded-2" onclick="copyModalContent('modalPayload')" title="Copy JSON">
+                            <i class="ti ti-copy me-1"></i> Copy
+                        </button>
+                    </div>
+                    <div class="rounded-3 border overflow-hidden shadow-sm" style="background: #1e1e1e;">
+                        <pre id="modalPayload" class="mb-0 p-3 text-success" style="max-height: 500px; overflow-y: auto; font-size: 12px; font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace; line-height: 1.6; color: #9cdcfe !important;"></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-top-0 pb-4 px-4 pt-0">
+                <button type="button" class="btn btn-primary rounded-pill px-5 fw-bold" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const rows = document.querySelectorAll('.conversion-row');
+        const modalElement = document.getElementById('conversionDetailsModal');
+        const modal = new bootstrap.Modal(modalElement);
+        
+        const modalPayload = document.getElementById('modalPayload');
+        const modalAccount = document.getElementById('modalAccount');
+        const modalTime = document.getElementById('modalTime');
+
+        rows.forEach(row => {
+            row.addEventListener('click', function(e) {
+                if (e.target.closest('button') || e.target.closest('a')) return;
+
+                const payload = JSON.parse(this.getAttribute('data-payload') || '{}');
+                const account = this.getAttribute('data-account');
+                const time = this.getAttribute('data-time');
+
+                modalPayload.textContent = JSON.stringify(payload, null, 4);
+                modalAccount.textContent = account;
+                modalTime.textContent = time;
+                
+                modal.show();
+            });
+        });
+    });
+
+    async function copyModalContent(elementId) {
+        const text = document.getElementById(elementId).textContent;
+        try {
+            await navigator.clipboard.writeText(text);
+            const btn = event.currentTarget;
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="ti ti-check text-success"></i> Copied!';
+            setTimeout(() => btn.innerHTML = originalHTML, 2000);
+        } catch (err) {
+            console.error('Failed to copy: ', err);
+        }
+    }
+</script>
