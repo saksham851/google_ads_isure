@@ -76,7 +76,6 @@
                             <% logs.forEach(log => { %>
                             <tr class="transition-all webhook-row" style="cursor: pointer;" 
                                 data-payload='<%= JSON.stringify(log.payload || {}) %>' 
-                                data-headers='<%= JSON.stringify(log.headers || {}) %>'
                                 data-source="<%= log.source || 'GHL' %>" 
                                 data-time="<%= new Date(log.createdAt).toLocaleString() %>">
                                 <td class="px-4 py-3">
@@ -160,57 +159,29 @@
 <!-- Webhook Details Modal -->
 <div class="modal fade" id="webhookDetailsModal" tabindex="-1" aria-labelledby="webhookDetailsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
-            <div class="modal-header border-bottom-0 pt-4 px-4 pb-0">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
+            <div class="modal-header bg-white border-bottom-0 pt-4 px-4 pb-2">
                 <div>
-                    <h5 class="modal-title fw-bold text-dark" id="webhookDetailsModalLabel">Webhook Data</h5>
-                    <p class="text-muted small mb-0" id="webhookMetaInfo">Source: <span id="modalSource" class="fw-bold text-primary"></span> | Received: <span id="modalTime" class="fw-bold"></span></p>
+                    <h5 class="modal-title fw-bold text-dark" id="webhookDetailsModalLabel">Webhook Payload Data</h5>
+                    <p class="text-muted small mb-0">Source: <span id="modalSource" class="text-primary fw-medium"></span> &bull; Received at <span id="modalTime" class="fw-medium text-dark"></span></p>
                 </div>
                 <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
-                <!-- Nav Tabs -->
-                <ul class="nav nav-pills nav-justified mb-3 bg-light p-1 rounded-pill" id="webhookTab" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active rounded-pill fw-bold py-2" id="body-tab" data-bs-toggle="tab" data-bs-target="#body-content" type="button" role="tab" aria-controls="body-content" aria-selected="true" style="font-size: 12px;">
-                            <i class="ti ti-file-code me-1"></i> PAYLOAD BODY
+                <div class="position-relative">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="badge bg-light text-dark border text-uppercase" style="font-size: 10px; letter-spacing: 0.5px;">Raw Body JSON</span>
+                        <button class="btn btn-sm btn-light border-0 py-1 px-2 rounded-2" onclick="copyModalContent('modalPayload')" title="Copy JSON">
+                            <i class="ti ti-copy me-1"></i> Copy
                         </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link rounded-pill fw-bold py-2" id="headers-tab" data-bs-toggle="tab" data-bs-target="#headers-content" type="button" role="tab" aria-controls="headers-content" aria-selected="false" style="font-size: 12px;">
-                            <i class="ti ti-settings me-1"></i> HEADERS
-                        </button>
-                    </li>
-                </ul>
-
-                <!-- Tab Content -->
-                <div class="tab-content" id="webhookTabContent">
-                    <div class="tab-pane fade show active" id="body-content" role="tabpanel" aria-labelledby="body-tab">
-                        <div class="bg-dark p-3 rounded-4 border position-relative overflow-hidden">
-                            <div class="d-flex justify-content-between align-items-center mb-2 px-1">
-                                <small class="text-light opacity-50 font-monospace" style="font-size: 10px;">RAW JSON PAYLOAD</small>
-                                <button class="btn btn-sm btn-outline-light border-0 py-0 px-2" onclick="copyModalContent('modalPayload')" title="Copy JSON">
-                                    <i class="ti ti-copy small"></i> <small style="font-size: 10px;">Copy</small>
-                                </button>
-                            </div>
-                            <pre id="modalPayload" class="mb-0 text-success" style="max-height: 400px; overflow-y: auto; font-size: 11px; font-family: 'JetBrains Mono', 'Fira Code', monospace;"></pre>
-                        </div>
                     </div>
-                    <div class="tab-pane fade" id="headers-content" role="tabpanel" aria-labelledby="headers-tab">
-                        <div class="bg-dark p-3 rounded-4 border position-relative overflow-hidden">
-                            <div class="d-flex justify-content-between align-items-center mb-2 px-1">
-                                <small class="text-light opacity-50 font-monospace" style="font-size: 10px;">HTTP REQUEST HEADERS</small>
-                                <button class="btn btn-sm btn-outline-light border-0 py-0 px-2" onclick="copyModalContent('modalHeaders')" title="Copy Headers">
-                                    <i class="ti ti-copy small"></i> <small style="font-size: 10px;">Copy</small>
-                                </button>
-                            </div>
-                            <pre id="modalHeaders" class="mb-0 text-info" style="max-height: 400px; overflow-y: auto; font-size: 11px; font-family: 'JetBrains Mono', 'Fira Code', monospace;"></pre>
-                        </div>
+                    <div class="rounded-3 border overflow-hidden shadow-sm" style="background: #1e1e1e;">
+                        <pre id="modalPayload" class="mb-0 p-3 text-success" style="max-height: 500px; overflow-y: auto; font-size: 12px; font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace; line-height: 1.6; color: #9cdcfe !important;"></pre>
                     </div>
                 </div>
             </div>
-            <div class="modal-footer border-top-0 pb-4 px-4 pt-0 justify-content-center">
-                <button type="button" class="btn btn-primary rounded-pill px-5 shadow-sm" data-bs-dismiss="modal">Done</button>
+            <div class="modal-footer border-top-0 pb-4 px-4 pt-0">
+                <button type="button" class="btn btn-primary rounded-pill px-5 fw-bold" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -223,30 +194,21 @@
         const modal = new bootstrap.Modal(modalElement);
         
         const modalPayload = document.getElementById('modalPayload');
-        const modalHeaders = document.getElementById('modalHeaders');
         const modalSource = document.getElementById('modalSource');
         const modalTime = document.getElementById('modalTime');
 
         rows.forEach(row => {
             row.addEventListener('click', function(e) {
-                // Don't trigger if a button or link inside row was clicked (if any)
                 if (e.target.closest('button') || e.target.closest('a')) return;
 
                 const payload = JSON.parse(this.getAttribute('data-payload') || '{}');
-                const headers = JSON.parse(this.getAttribute('data-headers') || '{}');
                 const source = this.getAttribute('data-source');
                 const time = this.getAttribute('data-time');
 
                 modalPayload.textContent = JSON.stringify(payload, null, 4);
-                modalHeaders.textContent = JSON.stringify(headers, null, 4);
                 modalSource.textContent = source;
                 modalTime.textContent = time;
                 
-                // Reset to first tab
-                const firstTabEl = document.querySelector('#webhookTab button[data-bs-target="#body-content"]');
-                const firstTab = new bootstrap.Tab(firstTabEl);
-                firstTab.show();
-
                 modal.show();
             });
         });
@@ -258,7 +220,7 @@
             await navigator.clipboard.writeText(text);
             const btn = event.currentTarget;
             const originalHTML = btn.innerHTML;
-            btn.innerHTML = '<i class="ti ti-check text-success small"></i> <small class="text-success" style="font-size: 10px;">Copied!</small>';
+            btn.innerHTML = '<i class="ti ti-check text-success"></i> Copied!';
             setTimeout(() => btn.innerHTML = originalHTML, 2000);
         } catch (err) {
             console.error('Failed to copy: ', err);
