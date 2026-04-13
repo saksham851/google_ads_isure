@@ -32,6 +32,8 @@ class GoogleAdsService {
         let conversionActionId   = null;
         let conversionActionName = null;
 
+        const { mapping: overrideMapping = null } = options;
+
         // Use forcedActionId if provided (can be full resource name or just ID)
         if (forcedActionId) {
             conversionActionId = forcedActionId.includes('conversionActions/') 
@@ -39,6 +41,14 @@ class GoogleAdsService {
                 : forcedActionId;
             conversionActionName = 'Manual/Forced Action';
         } 
+        else if (overrideMapping) {
+            conversionActionId   = overrideMapping.conversionActionId;
+            conversionActionName = overrideMapping.conversionActionName;
+            // Use mapping value if no value was passed
+            if (!conversionValue && overrideMapping.conversionValue) {
+                conversionValue = overrideMapping.conversionValue;
+            }
+        }
         else if (agency.conversionMappings && agency.conversionMappings.length > 0) {
             const stage   = (lead.pipelineStage || '').toLowerCase();
             const mapping = agency.conversionMappings.find(m =>

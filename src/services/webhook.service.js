@@ -13,7 +13,7 @@ class WebhookService {
         logger.info(`[Webhook] Received payload | event: ${eventType}`);
 
         // 1. Determine locationId first to find the agency
-        const locationId = overrideLocationId || payload.location_id || payload.contact?.locationId;
+        const locationId = overrideLocationId || payload.location_id || payload.contact?.locationId || payload.location?.id || customData?.['location id'];
         if (!locationId) {
             throw new Error('Payload missing location_id — cannot route to agency');
         }
@@ -74,7 +74,9 @@ class WebhookService {
         // Extract GCLID
         let gclid = null;
         if (payload.gclid) gclid = payload.gclid;
+        if (!gclid && payload.Gclid) gclid = payload.Gclid;
         if (!gclid && customData?.gclid) gclid = customData.gclid;
+        if (!gclid && customData?.['gclid']) gclid = customData['gclid'];
         if (!gclid && Array.isArray(customFields)) {
             const gclidField = customFields.find(f =>
                 (f.name || '').toLowerCase().includes('gclid') ||
@@ -98,7 +100,24 @@ class WebhookService {
             || 'New Lead';
 
         // Determine if this event represents a conversion according to Agency Mappings
-        const tagList = Array.isArray(tags) ? tags : [];
+        let tagList = [];
+        if (Array.isArray(tags)) {
+            tagList = [...tags];
+        } else if (typeof tags === 'string' && tags.trim() !== '') {
+            tagList = tags.split(',').map(t => t.trim());
+        }
+
+        // Also check customData for tags (sometimes GHL puts them there)
+        if (customData?.tags) {
+            const extraTags = typeof customData.tags === 'string' 
+                ? customData.tags.split(',').map(t => t.trim()) 
+                : (Array.isArray(customData.tags) ? customData.tags : []);
+            
+            extraTags.forEach(t => {
+                if (t && !tagList.includes(t)) tagList.push(t);
+            });
+        }
+        
         let isConvertedStage = false;
         let matchedMapping   = null;
 
@@ -129,8 +148,8 @@ class WebhookService {
                 || (pipelineStage || '').toLowerCase().includes('won');
         }
 
-        const conversionValue = payload.value || opportunity?.monetary_value || payload.conversionValue || 0;
-        const currencyCode    = payload.currencyCode || payload.currency_code || 'USD';
+        const conversionValue = payload.value || payload.Amount || opportunity?.monetary_value || payload.conversionValue || customData?.value || 0;
+        const currencyCode    = payload.currencyCode || payload.currency_code || customData?.['currency code'] || 'USD';
         const conversionTime  = payload.conversionDateTime || payload.conversion_date_time || null;
 
         // 4. Upsert Lead record
@@ -157,7 +176,8 @@ class WebhookService {
             logger.info(`[Webhook] Triggering conversion upload for lead ${lead._id}`);
             await googleAdsService.processConversion(lead, agency, conversionValue, {
                 currencyCode,
-                conversionTime
+                conversionTime,
+                mapping: matchedMapping
             });
         }
 
