@@ -87,12 +87,7 @@ const agencyController = {
                 .limit(10);
 
             const webhookLogs = await WebhookLog
-                .find({
-                    $or: [
-                        { 'payload.location_id': agency.locationId },
-                        { 'payload.contact.locationId': agency.locationId }
-                    ]
-                })
+                .find({ locationId: agency.locationId })
                 .sort({ createdAt: -1 })
                 .limit(5);
 
