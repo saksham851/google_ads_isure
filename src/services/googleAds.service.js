@@ -57,38 +57,44 @@ class GoogleAdsService {
             if (mapping) {
                 conversionActionId   = mapping.conversionActionId;
                 conversionActionName = mapping.conversionActionName;
-                // Use mapping value if no value was passed
                 if (!conversionValue && mapping.conversionValue) {
                     conversionValue = mapping.conversionValue;
                 }
             }
         }
 
-        if (!conversionActionId) {
-            logger.warn(`[GoogleAds] No conversion action mapped for stage: "${lead.pipelineStage || 'unknown'}". Skipping.`);
-            return { success: false, reason: 'No Conversion Action mapped for this stage' };
-        }
-
         const conversionTime = overrideTime || formatForGoogleAds(new Date());
-        const conversionData = {
-            gclid:              lead.gclid,
-            conversion_action:  `customers/${customerId}/conversionActions/${conversionActionId}`,
-            conversion_date_time: conversionTime,
-            conversion_value:   conversionValue > 0 ? conversionValue : (lead.conversionValue || 1),
-            currency_code:      currencyCode
-        };
 
-        // ── Save a pending log entry ──────────────────────────────────────
+        // ── Save a log entry ──────────────────────────────────────
         const logRecord = new ConversionLog({
             agencyId:        agency._id,
             leadId:          lead._id,
             gclid:           lead.gclid,
             conversionTime,
-            conversionValue: conversionData.conversion_value,
-            conversionAction: conversionActionId,
+            conversionValue: conversionValue > 0 ? conversionValue : (lead.conversionValue || 1),
+            conversionAction: conversionActionId || 'none',
             status:          'pending'
         });
+
+        if (!conversionActionId) {
+            const reason = `No conversion mapping found for stage: "${lead.pipelineStage || 'unknown'}"`;
+            logRecord.status = 'failed';
+            logRecord.errorMessage = reason;
+            await logRecord.save();
+            
+            logger.warn(`[GoogleAds] ${reason}. Skipping.`);
+            return { success: false, reason };
+        }
+
         await logRecord.save();
+
+        const conversionData = {
+            gclid:              lead.gclid,
+            conversion_action:  `customers/${customerId}/conversionActions/${conversionActionId}`,
+            conversion_date_time: conversionTime,
+            conversion_value:   logRecord.conversionValue,
+            currency_code:      currencyCode
+        };
 
         // ── Upload to Google Ads ──────────────────────────────────────────
         try {
