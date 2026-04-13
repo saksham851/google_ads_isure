@@ -26,13 +26,16 @@ class WebhookService {
 
         // 2. Filter mappings if this webhook is linked to a specific one
         let activeMappings = agency.conversionMappings || [];
+        let forceMapping   = false;
+
         if (eventType && eventType !== 'general') {
             const webhookConfig = (agency.customWebhooks || []).find(w => w.slug === eventType);
             if (webhookConfig && webhookConfig.mappingId) {
                 const linkedMapping = activeMappings.find(m => m._id && m._id.toString() === webhookConfig.mappingId.toString());
                 if (linkedMapping) {
-                    logger.info(`[Webhook] Restricting to linked mapping: ${linkedMapping.pipelineStageKeyword}`);
+                    logger.info(`[Webhook] Explicitly linked to mapping: ${linkedMapping.pipelineStageKeyword}`);
                     activeMappings = [linkedMapping];
+                    forceMapping   = true;
                 }
             }
         }
@@ -122,17 +125,27 @@ class WebhookService {
         let matchedMapping   = null;
 
         if (activeMappings.length > 0) {
-            // Check if pipelineStage keyword matches
-            const stageLower = (pipelineStage || '').toLowerCase();
-            matchedMapping = activeMappings.find(m =>
-                stageLower.includes((m.pipelineStageKeyword || '').toLowerCase())
-            );
-
-            // Also check tags if pipelineStage didn't match
-            if (!matchedMapping && tagList.length > 0) {
+            if (forceMapping && activeMappings.length === 1) {
+                // If explicitly linked to this webhook, just use it
+                matchedMapping = activeMappings[0];
+            } else {
+                // Check if pipelineStage keyword matches
+                const stageLower = (pipelineStage || '').toLowerCase();
                 matchedMapping = activeMappings.find(m =>
-                    tagList.some(tag => tag.toLowerCase().includes((m.pipelineStageKeyword || '').toLowerCase()))
+                    stageLower.includes((m.pipelineStageKeyword || '').toLowerCase())
                 );
+
+                // Also check tags if pipelineStage didn't match
+                if (!matchedMapping && tagList.length > 0) {
+                    matchedMapping = activeMappings.find(m =>
+                        tagList.some(tag => tag.toLowerCase().includes((m.pipelineStageKeyword || '').toLowerCase()))
+                    );
+                }
+
+                // FALLBACK: If there is ONLY ONE mapping in the entire agency, use it as a last resort
+                if (!matchedMapping && agency.conversionMappings.length === 1) {
+                    matchedMapping = agency.conversionMappings[0];
+                }
             }
 
             if (matchedMapping) {
